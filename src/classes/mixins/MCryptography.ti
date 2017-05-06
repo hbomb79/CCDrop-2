@@ -1,0 +1,31 @@
+abstract class MCryptography mixin DiffieHellman
+
+local lastYield = 0
+function MCryptography:yield()
+    os.queueEvent "primeCheck"; os.pullEvent "primeCheck";
+    lastYield = os.clock()
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function MCryptography:encrypt( text )
+
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function MCryptography:decrypt( text )
+
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function MCryptography:generateSecret()
+
+end

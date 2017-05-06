@@ -1,0 +1,38 @@
+class CCDrop extends Application mixin MRednet mixin MCryptography {
+    backgroundColour = 8;
+    colour = 1;
+
+    state = "root"; -- can be sending, receiving, connecting, discovering or root
+}
+
+--[[
+    @constructor
+    @desc
+]]
+function CCDrop:__init__( ... )
+    self:resolve( ... )
+    self:super( ... )
+
+    self:on( "terminate", function()
+        self:stop()
+        term.clear()
+    end )
+
+    self:on( "modem_message", self.handleEvent )
+end
+
+--[[
+    @instance
+    @desc
+]]
+function CCDrop:sendContent()
+
+end
+
+--[[
+    @instance
+    @desc
+]]
+function CCDrop:receiveContent()
+
+end

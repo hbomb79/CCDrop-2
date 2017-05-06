@@ -1,0 +1,63 @@
+abstract class MRednet {
+    static = {
+        channels = {
+            DISCOVER = 65535;
+            SEND = 6018;
+            REPLY = 6019;
+        }
+    }
+}
+
+
+--[[
+    @instance
+    @desc
+]]
+function CCDrop:getModems()
+    self.modems = { peripheral.find "modem" }
+end
+
+function MRednet:openChannel( channel )
+    local modems = self.modems
+    for i = 1, #modems do
+        if not modems[ i ].isOpen( channel ) then
+            modems[ i ].open( channel )
+        end
+    end
+end
+
+--[[
+    @instance
+    @desc
+]]
+function MRednet:broadcast()
+
+end
+
+--[[
+    @instance
+    @desc
+]]
+function MRednet:send()
+
+end
+
+--[[
+    @instance
+    @desc
+]]
+function MRednet:handleMessage( message )
+
+end
+
+--[[
+    @instance
+    @desc
+]]
+function MRednet:discoverClients()
+    self.timeout = os.startTimer( 3 )
+    self.discovering = true
+
+    self:broadcast( MRednet.channels.DISCOVER, MRednet.channels.REPLY, "PING" )
+    self:openChannel( MRednet.channels.REPLY )
+end
