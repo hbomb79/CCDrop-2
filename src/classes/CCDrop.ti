@@ -1,4 +1,4 @@
-class CCDrop extends Application mixin MRednet mixin MCryptography {
+class CCDrop extends Application mixin MRednet mixin MCryptography mixin MNotificationManager {
     backgroundColour = 8;
     colour = 1;
 
