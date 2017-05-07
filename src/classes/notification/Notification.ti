@@ -34,7 +34,7 @@ function Notification:__init__( ... )
         local b = Button( text ):set { id = name, X = X, Y = Y }
         b:on("trigger", function() self:executeCallbacks( name ) end)
 
-        X = X + #text + 4 -- 2 for padding, 2 for margin between buttons
+        X = X + #text + 4 -- 2 for padding + 2 for margin between buttons = 4
         self:addNode( b )
     end
 

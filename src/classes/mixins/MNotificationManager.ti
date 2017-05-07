@@ -1,7 +1,16 @@
 abstract class MNotificationManager {
     notifications = {};
     activeNotification = false;
+    isPanelOpen = false;
 }
+
+function MNotificationManager:openNotifications()
+    notificationView:animate("notifPanel", "Y", 1, .25, "outSine")
+end
+
+function MNotificationManager:closeNotifications()
+    notificationView:animate("notifPanel", "Y", -notificationView.height, .25, "inSine")
+end
 
 function MNotificationManager:addNotification( notification )
     table.insert( self.notifications, notification )
@@ -14,7 +23,15 @@ function MNotificationManager:addNotification( notification )
     end
 
     notificationContent:addNode( notification )
+    notificationTiler:addNode( TileNotification( notification ) ):set( "width", notificationTiler.width )
     self:updateDisplay()
+end
+
+function MNotificationManager:hideActive( cb )
+    local notif = self.activeNotification
+    if notif then
+        notif:animate( "notificationSlide", "Y", -notif.height, 0.25, "inOutCubic", cb )
+    end
 end
 
 function MNotificationManager:removeNotification( notification )
@@ -28,10 +45,10 @@ function MNotificationManager:removeNotification( notification )
     end
 
     if self.activeNotification == notification then
-        notification:animate( "notificationSlide", "Y", -notification.height, 0.25, "inOutCubic", function()
+        self:hideActive( function()
             self.activeNotification = false
             remove( notification )
-        end)
+        end )
     else
         remove( notification )
     end

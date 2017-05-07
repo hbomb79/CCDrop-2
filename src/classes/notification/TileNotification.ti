@@ -1,0 +1,46 @@
+class TileNotification extends Container {
+    height = 3;
+}
+
+function TileNotification:__init__( ... )
+    self:resolve( ... )
+    self:super( ... )
+
+    local notif = self.notification
+    self.titleLabel = self:addNode( Label( notif.title ) ):set {
+        colour = 128;
+        Y = 1;
+        X = 2;
+    }
+
+    if notif.body then
+        self.bodyLabel = self:addNode( Label( notif.body:sub( 1, 10 ) .. "..." ) ):set {
+            Y = 2;
+            colour = 256;
+            X = 2;
+        }
+    end
+
+
+    if notif.body or notif.options then
+        self.expandButton = self:addNode( Button( _HOST and "\16" or ">" ) ):set {
+            Y = 1;
+            X = "$parent.width";
+            width = 1;
+            height = 3;
+            verticalAlign = "centre";
+            colour = colours.cyan;
+            Z = 2;
+        }
+
+        self.expandButton:on("trigger", function()
+            client:expandNotification( notif )
+        end)
+    end
+
+    self.backgroundColour = 1
+end
+
+configureConstructor( {
+    orderedArguments = { "notification" }
+}, true )

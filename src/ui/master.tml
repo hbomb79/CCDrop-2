@@ -1,10 +1,24 @@
 <!-- TODO: On alpha.9 release of Titanium, implement OverlayContainer -->
 <Container id="notifications" Z=2 width="$application.width" height="$application.height" consumeAll=false transparent=true>
-
+    <Container id="panel" Z=2 width="$application.width - 6" X=4 height="$application.height" backgroundColour=256>
+        <PageContainer id="panel_changer" width="$parent.width" height="$parent.height">
+            <Page id="main">
+                <Label text="Notification Panel" colour=1 Y=2 X=2/>
+                <Button text="Clear All" X="$parent.width - self.width - 1" Y=2 backgroundColour="cyan" colour="white"/>
+                <Button id="collapse_notifications" text="Collapse" class="centre" Y="$parent.height" width="$parent.width + 1" colour="1"/>
+                <ScrollContainer id="list" Y=4 width="$parent.width" height="$parent.height - 5"/>
+            </Page>
+            <Page id="target">
+                <Label text="error" id="notif_title"/>
+                <TextContainer text="error" id="notif_body" width="5" height="$parent.height"/>
+            </Page>
+        </PageContainer>
+    </Container>
 </Container>
 
 <Container width="$application.width" height="2" backgroundColour="lightBlue">
     <Label text="CCDrop" colour="blue"/>
+    <Button id="open_notifications" text="Open" class="centre" colour="1"/>
     <Button text="x" colour="red" X="$application.width" width="1" activeBackgroundColour="0" id="exit"/>
 </Container>
 
