@@ -1,18 +1,23 @@
 <!-- TODO: On alpha.9 release of Titanium, implement OverlayContainer -->
 <Container id="notifications" Z=2 width="$application.width" height="$application.height" transparent>
-    <Container id="panel" Z=2 width="$application.width - 6" X=4 height="$application.height" backgroundColour=256 Y="$-self.height">
-        <PageContainer id="panel_changer" width="$parent.width" height="$parent.height">
+    <Container id="panel" Z=2 width="$application.width - 6" X=4 height="$application.height" backgroundColour="blue" Y="$-self.height">
+        <PageContainer id="panel_changer" width="$parent.width" height="$parent.height - 1">
             <Page id="main">
                 <Label text="Notification Panel" colour=1 Y=2 X=2/>
+
                 <Button text="Clear All" X="$parent.width - self.width - 1" Y=2 backgroundColour="cyan" colour="white"/>
-                <Button id="collapse_notifications" text="Collapse" class="centre" Y="$parent.height" width="$parent.width + 1" colour="1"/>
                 <ScrollContainer id="list" Y=4 width="$parent.width" height="$parent.height - 5"/>
+
+                <Label text="No Notifications!" colour=256 class="centre" id="no_notifs" Y=6 Z=2/>
             </Page>
             <Page id="target">
-                <Label text="error" id="notif_title"/>
-                <TextContainer text="error" id="notif_body" width="5" height="$parent.height"/>
+                <Label text="error" id="notif_title" X=2 Y=4 colour="cyan"/>
+                <TextContainer text="error" id="notif_body" X=2 Y=6 width="5" height="$parent.height - 9" colour=1/>
+
+                <Button id="return" text="< All Notifications" width="$#self.text" X=2 Y=2 horizontalAlign="left"/>
             </Page>
         </PageContainer>
+        <Button id="collapse_notifications" text="Collapse" class="centre" Y="$parent.height" width="$parent.width + 1" colour="1"/>
     </Container>
 </Container>
 

@@ -6,11 +6,14 @@ abstract class MNotificationManager {
 
 function MNotificationManager:openNotifications()
     notificationView:animate("notifPanel", "Y", 1, .25, "outSine")
+
     self.isPanelOpen = true
 end
 
 function MNotificationManager:closeNotifications()
     notificationView:animate("notifPanel", "Y", -notificationView.height, .25, "inSine")
+    notificationChanger:selectPage "main"
+
     self.isPanelOpen = false
 end
 
@@ -25,8 +28,32 @@ function MNotificationManager:addNotification( notification )
     end
 
     notificationContent:addNode( notification )
-    notificationTiler:addNode( TileNotification( notification ) ):set( "width", notificationTiler.width )
+    local tile = notificationTiler:addNode( TileNotification( notification ) ):set {
+        id = notification.__ID;
+        width = notificationTiler.width - 2;
+        X = 2;
+    }
+
+    if #tile.bodyLabel.text > notificationTiler.width - 5 then
+        tile.bodyLabel.text = tile.bodyLabel.text:sub( 1, notificationTiler.width - 8 ) .. "..."
+    end
+
     self:updateDisplay()
+end
+
+function MNotificationManager:expandNotification( notif )
+    -- Replace notif title and body
+    local target = notificationChanger:query "Page#target".result[ 1 ]
+    target:query "#notif_title":set( "text", notif.title )
+
+    target:query "#notif_body":set {
+        text = notif.body or "",
+        width = target.width
+    }
+    -- Spawn buttons
+
+    -- Show page
+    target.parent:selectPage "target"
 end
 
 function MNotificationManager:hideActive( cb )
@@ -44,6 +71,9 @@ function MNotificationManager:removeNotification( notification )
                 break
             end
         end
+
+        notificationTiler:removeNode( notification.__ID )
+        notificationView:query "#no_notifs":set( "visible", #self.notifications == 0 )
     end
 
     if self.activeNotification == notification then
@@ -65,4 +95,6 @@ function MNotificationManager:updateDisplay()
         if not self.activeNotification then return end
         self.activeNotification:animate( "notificationSlide", "Y", 1, 0.15 )
     end
+
+    notificationView:query "#no_notifs":set( "visible", #self.notifications == 0 )
 end

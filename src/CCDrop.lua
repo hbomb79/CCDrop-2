@@ -22,6 +22,8 @@ notificationChanger = notificationView:query "#panel_changer".result[ 1 ]
 notificationTiler = notificationChanger:query "#list".result[ 1 ]
 pages = client:query "PageContainer#master".result[ 1 ]
 
+notificationChanger:query "#return":on( "trigger", function() notificationChanger:selectPage "main" end )
+
 notificationChanger:selectPage "main"
 
 -- Let click events pass through the container if they don't collide with a child node

@@ -15,6 +15,18 @@ function Notification:__init__( ... )
         X = 2;
     }
 
+    self:addNode( Button "x" ):set {
+        X = "$parent.width";
+        colour = colours.cyan;
+        activeColour = colours.lightBlue;
+        activeBackgroundColour = 0;
+        width = 1;
+    }:on("trigger", function()
+        if client.activeNotification == self then
+            client:hideActive()
+        end
+    end)
+
     if self.body then
         self.bodyTextContainer = self:addNode( TextContainer( self.body ) ):set {
             width = 5;
