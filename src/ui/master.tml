@@ -1,6 +1,6 @@
 <!-- TODO: On alpha.9 release of Titanium, implement OverlayContainer -->
-<Container id="notifications" Z=2 width="$application.width" height="$application.height" consumeAll=false transparent=true>
-    <Container id="panel" Z=2 width="$application.width - 6" X=4 height="$application.height" backgroundColour=256>
+<Container id="notifications" Z=2 width="$application.width" height="$application.height" transparent>
+    <Container id="panel" Z=2 width="$application.width - 6" X=4 height="$application.height" backgroundColour=256 Y="$-self.height">
         <PageContainer id="panel_changer" width="$parent.width" height="$parent.height">
             <Page id="main">
                 <Label text="Notification Panel" colour=1 Y=2 X=2/>
@@ -18,7 +18,7 @@
 
 <Container width="$application.width" height="2" backgroundColour="lightBlue">
     <Label text="CCDrop" colour="blue"/>
-    <Button id="open_notifications" text="Open" class="centre" colour="1"/>
+    <Button id="open_notifications" text="Open" class="centre" colour="1" activeColour="cyan"/>
     <Button text="x" colour="red" X="$application.width" width="1" activeBackgroundColour="0" id="exit"/>
 </Container>
 
