@@ -14,7 +14,7 @@ function TileNotification:__init__( ... )
     }
 
     if notif.body then
-        self.bodyLabel = self:addNode( Label( notif.body:sub( 1, 10 ) .. "..." ) ):set {
+        self.bodyLabel = self:addNode( Label( notif.body ) ):set {
             Y = 2;
             colour = 256;
             X = 2;
@@ -38,7 +38,7 @@ function TileNotification:__init__( ... )
         end)
     end
 
-    self.backgroundColour = 1
+    self.backgroundColour = 8;
 end
 
 configureConstructor( {

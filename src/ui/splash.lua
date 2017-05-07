@@ -1,4 +1,6 @@
 _G.cos = math.cos
+dofile "titanium.lua"
+
 TERM_X, TERM_Y = term.getSize()
 
 term.setBackgroundColour( colours.grey )

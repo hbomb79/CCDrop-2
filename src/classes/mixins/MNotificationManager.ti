@@ -6,17 +6,19 @@ abstract class MNotificationManager {
 
 function MNotificationManager:openNotifications()
     notificationView:animate("notifPanel", "Y", 1, .25, "outSine")
+    self.isPanelOpen = true
 end
 
 function MNotificationManager:closeNotifications()
     notificationView:animate("notifPanel", "Y", -notificationView.height, .25, "inSine")
+    self.isPanelOpen = false
 end
 
 function MNotificationManager:addNotification( notification )
     table.insert( self.notifications, notification )
 
     notification.width = "$parent.width - 6"
-    notification.Y = notification.height * -1
+    notification.Y = -notification.height
 
     if notification.bodyTextContainer then
         notification.bodyTextContainer.width = "$parent.width - 1"
@@ -55,10 +57,12 @@ function MNotificationManager:removeNotification( notification )
 end
 
 function MNotificationManager:updateDisplay()
-    if not self.activeNotification then
-        self.activeNotification = self.notifications[ 1 ]
-    end
+    if not self.isPanelOpen then
+        if not self.activeNotification then
+            self.activeNotification = self.notifications[ 1 ]
+        end
 
-    if not self.activeNotification then return end
-    self.activeNotification:animate( "notificationSlide", "Y", 1, 0.15 )
+        if not self.activeNotification then return end
+        self.activeNotification:animate( "notificationSlide", "Y", 1, 0.15 )
+    end
 end
