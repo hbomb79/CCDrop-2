@@ -1,0 +1,19 @@
+class FileNotification extends Notification {
+    options = {
+        accept = "Accept Transfer";
+        deny = "Deny Transfer";
+    }
+}
+
+function FileNotification:__init__( message )
+    self.title = "File Transfer Request"
+    self.body = ( message.name and "Client " .. message.name or "Computer " .. message.sender ) .. " is requesting a file transfer"
+
+    self:on("accept", function()
+
+    end)
+
+    self:on("deny", function()
+
+    end)
+end

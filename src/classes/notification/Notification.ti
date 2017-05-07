@@ -1,0 +1,73 @@
+class Notification extends Container {
+    title = "Notification";
+    body = false;
+    options = false;
+    collapsed = true;
+}
+
+function Notification:__init__( ... )
+    self:resolve( ... )
+    self:super( ... )
+
+    self.titleLabel = self:addNode( Label( self.title ) ):set {
+        colour = 128;
+        Y = 2;
+        X = 2;
+    }
+
+    if self.body then
+        self.bodyTextContainer = self:addNode( TextContainer( self.body ) ):set {
+            width = 5;
+            height = math.max( math.ceil( #self.body / TERM_X ), 4 );
+            Y = 4;
+            colour = 256;
+            X = 2;
+            visible = false;
+        }
+    end
+
+    local X = 2
+    local Y = math.ceil( self.body and #self.body / TERM_X or 4 ) + 5
+    for i = 1, #self.options do
+        local name, text = unpack( self.options[ i ] )
+
+        local b = Button( text ):set { id = name, X = X, Y = Y }
+        b:on("trigger", function() self:executeCallbacks( name ) end)
+
+        X = X + #text + 4 -- 2 for padding, 2 for margin between buttons
+        self:addNode( b )
+    end
+
+    if self.body or self.options then
+        self.expandButton = self:addNode( Button( _HOST and "\31" or "Show More" ) ):set {
+            Y = 4;
+            Z = 2;
+        }
+
+        self.expandButton:addClass "centre"
+        self.expandButton:on("trigger", function()
+            self:removeNode( self.expandButton )
+            self.collapsed = false
+
+            self:animate( "notificationExpand", "height", math.ceil( self.body and #self.body / TERM_X or 4 ) + 4 + ( self.options and 2 or 0 ), 0.125, "inOutSine" )
+
+            if self.bodyTextContainer then
+                self.bodyTextContainer.visible = true
+            end
+        end)
+    end
+
+    self.X = 4
+    self.height = 4
+    self.backgroundColour = 1
+end
+
+
+configureConstructor({
+    orderedArguments = { "title", "body", "options" };
+    argumentTypes = {
+        title = "string",
+        body = "string",
+        options = "table"
+    }
+}, true)

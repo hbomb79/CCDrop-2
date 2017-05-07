@@ -1,3 +1,47 @@
 abstract class MNotificationManager {
     notifications = {};
+    activeNotification = false;
 }
+
+function MNotificationManager:addNotification( notification )
+    table.insert( self.notifications, notification )
+
+    notification.width = "$parent.width - 6"
+    notification.Y = notification.height * -1
+
+    if notification.bodyTextContainer then
+        notification.bodyTextContainer.width = "$parent.width - 1"
+    end
+
+    notificationContent:addNode( notification )
+    self:updateDisplay()
+end
+
+function MNotificationManager:removeNotification( notification )
+    local function remove( notif )
+        for i = 1, #self.notifications do
+            if self.notifications[ i ] == notif then
+                table.remove( self.notifications, i )
+                break
+            end
+        end
+    end
+
+    if self.activeNotification == notification then
+        notification:animate( "notificationSlide", "Y", -notification.height, 0.25, "inOutCubic", function()
+            self.activeNotification = false
+            remove( notification )
+        end)
+    else
+        remove( notification )
+    end
+end
+
+function MNotificationManager:updateDisplay()
+    if not self.activeNotification then
+        self.activeNotification = self.notifications[ 1 ]
+    end
+
+    if not self.activeNotification then return end
+    self.activeNotification:animate( "notificationSlide", "Y", 1, 0.15 )
+end

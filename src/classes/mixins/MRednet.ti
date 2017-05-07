@@ -13,15 +13,60 @@ abstract class MRednet {
     @instance
     @desc
 ]]
-function CCDrop:getModems()
-    self.modems = { peripheral.find "modem" }
+function MRednet:getModem()
+    self.modem = peripheral.find "modem"
 end
 
-function MRednet:openChannel( channel )
-    local modems = self.modems
-    for i = 1, #modems do
-        if not modems[ i ].isOpen( channel ) then
-            modems[ i ].open( channel )
+function MRednet:openChannels()
+    local modem = self.modem
+    for channelName, channel in pairs( MRednet.channels ) do
+        if not modem.isOpen( channel ) then
+            modem.open( channel )
+        end
+    end
+end
+
+function MRednet:formatMessage( content, extra )
+    extra = extra or {}
+    extra.content = content
+    extra.sender = os.getComputerID()
+    extra.name = os.getComputerLabel() or "CCDrop Client"
+
+    return textutils.serialise( extra )
+end
+
+--[[
+    @instance
+    @desc
+]]
+function MRednet:send( channel, replyChannel, content, extra )
+    local modem = self.modem
+    modem.transmit( channel, replyChannel, self:formatMessage( content, extra ) )
+end
+
+--[[
+    @instance
+    @desc
+]]
+function MRednet:handleMessage( message )
+    message = textutils.unserialise( message.content )
+    if not message or ( message.target and message.target ~= os.getComputerID() ) then
+        return
+    end
+
+    if message.content == "PING" and message.channel == MRednet.channels.DISCOVER and message.sender and self.allowRequests then
+        -- A client has pinged us, respond so it knows we are here
+        self:send( message.replyChannel, message.replyChannel, "PONG", { target = message.sender } )
+    elseif message.content == "FILE_PROMPT" then
+        -- A client wants to send us a file/folder
+        self:notify( FileNotification( message ) )
+    elseif self.state == "discovering" then
+        if message.content == "PONG" and message.channel == MRednet.channels.REPLY then
+            -- Our ping revealed a client
+            if self.timeout then os.cancelTimer( self.timeout ) end
+            self.timeout = os.startTimer( 1 )
+
+            table.insert( self.discovered, { message.sender, message.name } )
         end
     end
 end
@@ -30,34 +75,10 @@ end
     @instance
     @desc
 ]]
-function MRednet:broadcast()
-
-end
-
---[[
-    @instance
-    @desc
-]]
-function MRednet:send()
-
-end
-
---[[
-    @instance
-    @desc
-]]
-function MRednet:handleMessage( message )
-
-end
-
---[[
-    @instance
-    @desc
-]]
 function MRednet:discoverClients()
     self.timeout = os.startTimer( 3 )
-    self.discovering = true
+    self.discovered = {}
 
-    self:broadcast( MRednet.channels.DISCOVER, MRednet.channels.REPLY, "PING" )
-    self:openChannel( MRednet.channels.REPLY )
+    self:send( MRednet.channels.DISCOVER, MRednet.channels.REPLY, "PING" )
+    self.state = "discovering"
 end

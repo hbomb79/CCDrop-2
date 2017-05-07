@@ -1,8 +1,10 @@
 class CCDrop extends Application mixin MRednet mixin MCryptography mixin MNotificationManager {
-    backgroundColour = 8;
+    backgroundColour = 128;
     colour = 1;
 
-    state = "root"; -- can be sending, receiving, connecting, discovering or root
+    allowRequests = true;
+
+    state = false; -- can be sending, receiving, connecting, discovering, root or error
 }
 
 --[[
@@ -18,7 +20,30 @@ function CCDrop:__init__( ... )
         term.clear()
     end )
 
-    self:on( "modem_message", self.handleEvent )
+    self:on( "modem_message", self.handleMessage )
+    self:on( "peripheral", self.updatePeripherals )
+end
+
+--[[
+    @instance
+    @desc
+]]
+function CCDrop:setState( state )
+    pages:selectPage( state )
+    self.state = state
+end
+
+function CCDrop:revealSettings()
+
+end
+
+function CCDrop:concealSettings()
+
+end
+
+function CCDrop:updatePeripherals()
+    self:getModems()
+    self:openChannels()
 end
 
 --[[

@@ -1,0 +1,16 @@
+<Any>
+    <colour>lightBlue</colour>
+</Any>
+
+<Button>
+    <width dynamic>#self.text + 2</width>
+    <horizontalAlign>centre</horizontalAlign>
+</Button>
+
+<Any class="centre">
+    <X dynamic>parent.width / 2 - self.width / 2</X>
+</Any>
+
+<Label class="header">
+    <colour important>white</colour>
+</Label>

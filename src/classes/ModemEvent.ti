@@ -2,16 +2,12 @@ class ModemEvent extends Event {
     side = false;
     channel = false;
     replyChannel = false;
-    message = false;
+    content = false;
     distance = false;
 }
 
-function ModemEvent:__init__( name, side, channel, replyChannel, message, distance )
-    self.name = name
-    self.channel = channel
-    self.replyChannel = replyChannel
-    self.message = message
-    self.distance = distance
+function ModemEvent:__init__( name, ... )
+    self.side, self.channel, self.replyChannel, self.content, self.distance = ...
 
-    self.data = { name, side, channel, replyChannel, message, distance }
+    self.data = { name, ... }
 end
