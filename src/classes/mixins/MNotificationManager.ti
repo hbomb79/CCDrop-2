@@ -60,6 +60,7 @@ function MNotificationManager:hideActive( cb )
     local notif = self.activeNotification
     if notif then
         notif:animate( "notificationSlide", "Y", -notif.height, 0.25, "inOutCubic", cb )
+        notif:cancelAutoHide()
     end
 end
 

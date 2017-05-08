@@ -9,6 +9,12 @@ function Notification:__init__( ... )
     self:resolve( ... )
     self:super( ... )
 
+    client:schedule( function()
+        if client.activeNotification == self then
+            client:hideActive()
+        end
+    end, 4, false, "notif_hide" .. self.__ID )
+
     self.titleLabel = self:addNode( Label( self.title ) ):set {
         colour = 128;
         Y = 2;
@@ -58,6 +64,7 @@ function Notification:__init__( ... )
 
         self.expandButton:addClass "centre"
         self.expandButton:on("trigger", function()
+            self:cancelAutoHide()
             self:removeNode( self.expandButton )
             self.collapsed = false
 
@@ -74,6 +81,10 @@ function Notification:__init__( ... )
     self.backgroundColour = 1
 end
 
+
+function Notification:cancelAutoHide()
+    client:unschedule( "notif_hide" .. self.__ID )
+end
 
 configureConstructor({
     orderedArguments = { "title", "body", "options" };
