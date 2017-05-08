@@ -14,3 +14,46 @@
 <Label class="header">
     <colour important>white</colour>
 </Label>
+
+<Notification typeOf>
+    <Button id="notif_hide">
+        <X dynamic>parent.width</X>
+        <colour>cyan</colour>
+        <activeColour>lightBlue</activeColour>
+        <activeBackgroundColour>white</activeBackgroundColour>
+        <width important>1</width>
+    </Button>
+
+    <TextContainer>
+        <width>5</width>
+        <Y>4</Y>
+        <colour>256</colour>
+        <X>2</X>
+        <visible>false</visible>
+    </TextContainer>
+</Notification>
+
+<TileNotification typeOf>
+    <Label>
+        <X>2</X>
+    </Label>
+
+    <Label id="title">
+        <colour important>1</colour>
+    </Label>
+
+    <Label id="body">
+        <Y>2</Y>
+    </Label>
+
+    <Button>
+        <width important>1</width>
+        <X dynamic>parent.width</X>
+        <height dynamic>parent.height</height>
+        <verticalAlign>centre</verticalAlign>
+        <colour>cyan</colour>
+        <Z>2</Z>
+    </Button>
+
+    <backgroundColour dynamic>self.active and 256 or 128</backgroundColour>
+</TileNotification>

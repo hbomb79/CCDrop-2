@@ -3,17 +3,15 @@ class Notification extends Container {
     body = false;
     options = false;
     collapsed = true;
+
+    height = 4;
+    X = 4;
+    backgroundColour = 1;
 }
 
 function Notification:__init__( ... )
     self:resolve( ... )
     self:super( ... )
-
-    client:schedule( function()
-        if client.activeNotification == self then
-            client:hideActive()
-        end
-    end, 4, false, "notif_hide" .. self.__ID )
 
     self.titleLabel = self:addNode( Label( self.title ) ):set {
         colour = 128;
@@ -22,11 +20,7 @@ function Notification:__init__( ... )
     }
 
     self:addNode( Button "x" ):set {
-        X = "$parent.width";
-        colour = colours.cyan;
-        activeColour = colours.lightBlue;
-        activeBackgroundColour = 0;
-        width = 1;
+        id = "notif_hide";
     }:on("trigger", function()
         if client.activeNotification == self then
             client:hideActive()
@@ -34,33 +28,13 @@ function Notification:__init__( ... )
     end)
 
     if self.body then
-        self.bodyTextContainer = self:addNode( TextContainer( self.body ) ):set {
-            width = 5;
-            height = math.min( math.ceil( #self.body / TERM_X ), 4 );
-            Y = 4;
-            colour = 256;
-            X = 2;
-            visible = false;
-        }
+        self.bodyTextContainer = self:addNode( TextContainer( self.body ) ):set( "height", math.min( math.ceil( #self.body / TERM_X ), 4 ) )
     end
 
-    local X = 2
-    local Y = math.ceil( self.body and #self.body / TERM_X or 4 ) + 5
-    for i = 1, #self.options do
-        local name, text = unpack( self.options[ i ] )
-
-        local b = Button( text ):set { id = name, X = X, Y = Y }
-        b:on("trigger", function() self:executeCallbacks( name ) end)
-
-        X = X + #text + 4 -- 2 for padding + 2 for margin between buttons = 4
-        self:addNode( b )
-    end
+    self:generateButtons( 2, ( self.body and self.bodyTextContainer.height or 0 ) + 5 )
 
     if self.body or self.options then
-        self.expandButton = self:addNode( Button( _HOST and "\31" or "Show More" ) ):set {
-            Y = 4;
-            Z = 2;
-        }
+        self.expandButton = self:addNode( Button( _HOST and "\31" or "Show More" ) ):set( "Y", 4 )
 
         self.expandButton:addClass "centre"
         self.expandButton:on("trigger", function()
@@ -75,10 +49,38 @@ function Notification:__init__( ... )
             end
         end)
     end
+end
 
-    self.X = 4
-    self.height = 4
-    self.backgroundColour = 1
+function Notification:generateButtons( X, Y )
+    X, Y = X or 2, Y or 9
+
+    local options = self.options
+    if not options then return end
+
+    for i = 1, #options do
+        local name, text = options[ i ][ 1 ], options[ i ][ 2 ]
+
+        self:addNode( Button( text ):set { id = name, X = X + ( 4 * i ), Y = Y } ):on( "trigger", function()
+            self:executeCallbacks( name )
+        end )
+
+        X = X + #text
+    end
+end
+
+function Notification:configure()
+    self.width = "$parent.width - 6"
+    self.Y = -self.height
+
+    if self.body then
+        self.bodyTextContainer.width = "$parent.width - 1"
+    end
+
+    client:schedule( function()
+        if client.activeNotification == self then
+            client:hideActive()
+        end
+    end, 4, false, "notif_hide" .. self.__ID )
 end
 
 

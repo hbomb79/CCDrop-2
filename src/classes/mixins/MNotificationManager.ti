@@ -20,23 +20,17 @@ end
 function MNotificationManager:addNotification( notification )
     table.insert( self.notifications, notification )
 
-    notification.width = "$parent.width - 6"
-    notification.Y = -notification.height
-
-    if notification.bodyTextContainer then
-        notification.bodyTextContainer.width = "$parent.width - 1"
-    end
-
+    notification:configure()
     notificationContent:addNode( notification )
-    local tile = notificationTiler:addNode( TileNotification( notification ) ):set {
-        id = notification.__ID;
-        width = notificationTiler.width - 2;
-        X = 2;
+
+    _G.tile = notificationTiler:addNode( TileNotification( notification ) ):set {
+        id = notification.__ID,
+
     }
 
-    if #tile.bodyLabel.text > notificationTiler.width - 5 then
-        tile.bodyLabel.text = tile.bodyLabel.text:sub( 1, notificationTiler.width - 8 ) .. "..."
-    end
+    tile.width = "$parent.width - 2"
+    tile:refreshDynamicValues() --TODO: Fix
+    tile:configure()
 
     self:updateDisplay()
 end

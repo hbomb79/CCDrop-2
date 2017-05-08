@@ -747,6 +747,10 @@ function KeyEvent:__init__( name, key, held, sub )\
 \
     self.data = { name, key, held }\
 end",
+  [ "versionCheck.lua" ] = "-- Check if CC version supports special characters\
+if _HOST then\
+    _CC_SPECIAL_CHAR_SUPPORT = true\
+end",
   [ "MDynamic.ti" ] = "--[[\
     WIP\
 ]]\
@@ -889,7 +893,6 @@ end\
     @param <boolean - handled>\
 ]]\
 function Event:setHandled( handled )\
-    if handled then log( self, \"HANDLED\" ) end\
     self.raw.handled = handled\
 end\
 \
@@ -945,7 +948,7 @@ local function queryScope( scope, section, results )\
         node = scope[ i ]\
 \
         if ( not section.id or node.id == section.id ) and\
-        ( not section.type or section.type == \"*\" or node.__type == section.type ) and\
+        ( not section.type or section.type == \"*\" or ( section.ambiguous and Titanium.typeOf( node, section.type ) or node.__type == section.type ) ) and\
         ( not section.classes or node:hasClass( section.classes ) ) then\
             local condition, failed = section.condition\
             if condition then\
@@ -1133,7 +1136,10 @@ function QueryParser:parse()\
 \
     local token = self:stepForward()\
     while token do\
-        if token.type == \"QUERY_TYPE\" then\
+        if token.type == \"QUERY_TYPEOF\" then\
+            if currentStep.ambiguous then self:throw \"Attempted to set query section as 'ambiguous' using typeof operator (~). Already set as ambiguous (trailing ~)\" end\
+            currentStep.ambiguous = true\
+        elseif token.type == \"QUERY_TYPE\" then\
             if currentStep.type then self:throw( \"Attempted to set query type to '\"..token.value..\"' when already set as '\"..currentStep.type..\"'\" ) end\
 \
             currentStep.type = token.value\
@@ -1615,9 +1621,6 @@ end\
 function Application:handle( eName, ... )\
     local eventObject = Event.spawn( eName, ... )\
     if eventObject.main == \"KEY\" then self:handleKey( eventObject ) end\
-\
-    if eName == \"mouse_click\" then fs.open(\"log.txt\", \"w\").close() end\
-    log( self, \"Handling event '\"..tostring( eventObject ) .. \"'\")\
 \
     local nodes, node = self.nodes\
     for i = #nodes, 1, -1 do\
@@ -2385,7 +2388,6 @@ end\
     @return <boolean - propagate>\
 ]]\
 function PageContainer:handle( eventObj )\
-    log( self, \"res: \" .. tostring( self.super.super:handle( eventObj ) ) )\
     if not self.super.super:handle( eventObj ) then return end\
 \
     local clone\
@@ -2395,12 +2397,8 @@ function PageContainer:handle( eventObj )\
         clone.isWithin = clone.isWithin and eventObj:withinParent( self ) or false\
     end\
 \
-    log( self, \"shipping mouse event \" .. tostring( clone or eventObj ) .. \" allow mouse: \" .. tostring( self.allowMouse ) )\
     self:shipEvent( clone or eventObj )\
-    log( self, tostring( clone and clone.isWithin and ( self.consumeAll or clone.handled ) ) )\
     if clone and clone.isWithin and ( self.consumeAll or clone.handled ) then\
-        log( self, \"Clone: \" .. tostring( clone ) .. \", clone.isWithin: \" .. tostring( clone.isWithin ) .. \", consumeAll: \" .. tostring( self.consumeAll ) .. \", clone.handled\" .. tostring( clone.handled ))\
-        log( self, \"HANDLED event from PageContainer:handle \" .. tostring( eventObj ))\
         eventObj.handled = true\
     end\
     return true\
@@ -2581,7 +2579,7 @@ configureConstructor {\
 ]]\
 \
 class Slider extends Container {\
-    trackCharacter = \"\\140\";\
+    trackCharacter = _CC_SPECIAL_CHAR_SUPPORT and \"\\140\" or \"-\";\
     trackColour = 128;\
 \
     slideCharacter = \" \";\
@@ -2923,11 +2921,8 @@ function Container:handle( eventObj )\
         clone.isWithin = clone.isWithin and eventObj:withinParent( self ) or false\
     end\
 \
-    log( self, \"shipping mouse event \" .. tostring( clone or eventObj ) .. \" allow mouse: \" .. tostring( self.allowMouse ) )\
     self:shipEvent( clone or eventObj )\
     if clone and clone.isWithin and ( self.consumeAll or clone.handled ) then\
-        log( self, \"Clone: \" .. tostring( clone ) .. \", clone.isWithin: \" .. tostring( clone.isWithin ) .. \", consumeAll: \" .. tostring( self.consumeAll ) .. \", clone.handled\" .. tostring( clone.handled ))\
-        log( self, \"HANDLED event \" .. tostring( eventObj ))\
         eventObj.handled = true\
     end\
     return true\
@@ -3237,7 +3232,6 @@ end\
     *Note: The event instance passed can be of variable type, ideally it extends 'Event' so that required methods are implemented on the eventObj.\
 ]]\
 function Node:handle( eventObj )\
-    if self.debug then log( self, \"NODE got event\" ) end\
     local main, sub, within = eventObj.main, eventObj.sub, false\
     local handled, enabled = eventObj.handled, self.enabled\
 \
@@ -3250,13 +3244,11 @@ function Node:handle( eventObj )\
     end\
 \
     if main == \"MOUSE\" then\
-        log( self, \"node got mouse event, allow mouse: \" .. tostring( self.allowMouse ) )\
         if self.allowMouse then\
-            log( self, \"continue\" )\
             within = eventObj.isWithin and eventObj:withinParent( self ) or false\
 \
             if within and not enabled and self.consumeWhenDisabled then eventObj.handled = true end\
-        else log( self, \"return\" ) return end\
+        else return end\
     elseif ( main == \"KEY\" and not self.allowKey ) or ( main == \"CHAR\" and not self.allowChar ) then\
         return\
     end\
@@ -4493,6 +4485,8 @@ function QueryLexer:tokenize()\
 \
     if self.inCondition then\
         self:tokenizeCondition( stream )\
+    elseif stream:find \"^~\" then\
+        self:pushToken { type = \"QUERY_TYPEOF\", value = self:consumePattern \"^~\" }\
     elseif stream:find \"^%b[]\" then\
         self:pushToken { type = \"QUERY_COND_OPEN\" }\
         self:consume( 1 )\
@@ -4878,11 +4872,12 @@ configureConstructor({\
     argumentTypes = { text = \"string\" }\
 }, true)",
   [ "MThemeable.ti" ] = "local function doesLevelMatch( target, criteria, noAttr )\
-    if ( ( criteria.type and target.__type == criteria.type ) or criteria.type == \"*\" or not criteria.type ) and noAttr then\
+    local doesTypeMatch = criteria.ambiguous and Titanium.typeOf( target, criteria.type ) or target.__type == criteria.type\
+    if ( criteria.type == \"*\" or not criteria.type or doesTypeMatch ) and noAttr then\
         return true\
     end\
 \
-    if ( criteria.type and target.__type ~= criteria.type and criteria.type ~= \"*\" ) or ( criteria.id and target.id ~= criteria.id ) or ( criteria.classes and not target:hasClass( criteria.classes ) ) then\
+    if ( criteria.type and not doesTypeMatch and criteria.type ~= \"*\" ) or ( criteria.id and target.id ~= criteria.id ) or ( criteria.classes and not target:hasClass( criteria.classes ) ) then\
         return false\
     end\
 \
@@ -5878,7 +5873,7 @@ end\
     @return <boolean - propagate>\
 ]]\
 function ScrollContainer:handle( eventObj )\
-    local cache, isWithin = self.cache, eventObj.isWithin\
+    local cache = self.cache\
     local cloneEv\
 \
     if not self.super.super:handle( eventObj ) then return end\
@@ -5898,13 +5893,11 @@ function ScrollContainer:handle( eventObj )\
         end\
     else cloneEv = eventObj end\
 \
-    if cloneEv then log( self, \"shipping mouse event \" .. tostring( cloneEv ) .. \" allow mouse: \" .. tostring( self.allowMouse ) ); self:shipEvent( cloneEv ) end\
+    if cloneEv then self:shipEvent( cloneEv ) end\
     -- local r = self.super.super:handle( eventObj )\
 \
     -- eventObj.isWithin = isWithin\
     if cloneEv and cloneEv.isWithin and ( self.consumeAll or cloneEv.handled ) then\
-        log( self, \"Clone: \" .. tostring( cloneEv ) .. \", cloneEv.isWithin: \" .. tostring( cloneEv.isWithin ) .. \", consumeAll: \" .. tostring( self.consumeAll ) .. \", cloneEv.handled\" .. tostring( cloneEv.handled ))\
-        log( self, \"HANDLED event from ScrollContainer:handle \" .. tostring( cloneEv ))\
         eventObj.handled = true\
     end\
 \
@@ -9259,7 +9252,7 @@ local function splitXMLTheme( queue, tree )\
         if children then\
             for n = 1, #children do\
                 local type = tree[ i ].type\
-                queue[ #queue + 1 ] = { ( type == \"Any\" and \"*\" or type ) .. getTagDetails( tree[ i ] ), children[ n ], tree[ i ] }\
+                queue[ #queue + 1 ] = { ( tree[ i ].arguments.typeOf and \"~\" or \"\" ) .. ( type == \"Any\" and \"*\" or type ) .. getTagDetails( tree[ i ] ), children[ n ], tree[ i ] }\
             end\
         end\
     end\
@@ -9681,7 +9674,6 @@ end\
 ]]\
 function Button:onMouseClick( event, handled, within )\
     if not handled and within and ( self.buttonLock == 0 or event.button == self.buttonLock ) then\
-        log( self, \"Button Handled mouse click\" )\
         self.active, event.handled = true, true\
     end\
 end\
@@ -10184,10 +10176,13 @@ end).addEasing(\"outInBounce\", function( clock, initial, change, duration )\
 end)",
 }
 local scriptFiles = {
+  [ "versionCheck.lua" ] = true,
   [ "Class.lua" ] = true,
   [ "Titanium.lua" ] = true,
 }
-local preLoad = {}
+local preLoad = {
+  "versionCheck.lua",
+}
 local loaded = {}
 local function loadFile( name, verify )
     if loaded[ name ] then return end
