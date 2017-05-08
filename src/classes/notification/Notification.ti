@@ -42,7 +42,7 @@ function Notification:__init__( ... )
             self:removeNode( self.expandButton )
             self.collapsed = false
 
-            self:animate( "notificationExpand", "height", math.ceil( self.body and #self.body / TERM_X or 4 ) + 4 + ( self.options and 2 or 0 ), 0.125, "inOutSine" )
+            self:animate( "notificationExpand", "height", math.ceil( self.body and #self.body / TERM_X or 0 ) + 4 + ( self.options and 2 or 0 ), 0.125, "inOutSine" )
 
             if self.bodyTextContainer then
                 self.bodyTextContainer.visible = true
