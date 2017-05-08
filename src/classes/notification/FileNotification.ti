@@ -1,19 +1,13 @@
-class FileNotification extends Notification {
-    options = {
-        accept = "Accept Transfer";
-        deny = "Deny Transfer";
-    }
-}
+class FileNotification extends Notification
 
 function FileNotification:__init__( message )
-    self.title = "File Transfer Request"
-    self.body = ( message.name and "Client " .. message.name or "Computer " .. message.sender ) .. " is requesting a file transfer"
+    self:super( "File Transfer Request", ( message.name and "Client " .. message.name or "Computer " .. message.sender ) .. " is requesting a file transfer", { { "accept", "Accept Transfer" }, { "deny", "Deny Transfer" } } )
 
     self:on("accept", function()
-
+        error "accepted"
     end)
 
     self:on("deny", function()
-
+        client:removeNotification( self )
     end)
 end

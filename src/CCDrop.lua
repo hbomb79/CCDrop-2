@@ -29,18 +29,10 @@ notificationChanger:selectPage "main"
 -- Let click events pass through the container if they don't collide with a child node
 notificationContent.consumeAll = false
 
-local notif = Notification("Test Notification", "CCDrop features a notification based alert system. Instead of abruptly changing the page to show you details regarding a new file request, the information will be shown here in a scrollable manner.", { { "accept", "Accept Transfer" }, { "deny", "Deny Transfer" } } )
-notif:on("accept", function()
-    error "accepted"
-end)
-
-notif:on("deny", function()
-    client:removeNotification( notif )
-end)
-
-client:schedule( function()
-    client:addNotification( notif )
-end, 2 )
+client:addNotification( FileNotification {
+    name = "Reactor Controller";
+    sender = 10;
+} )
 
 local notifs_close = client:query "#collapse_notifications".result[ 1 ]
 local notifs_open = client:query "#open_notifications".result[ 1 ]

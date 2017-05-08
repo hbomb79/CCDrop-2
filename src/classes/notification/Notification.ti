@@ -30,7 +30,7 @@ function Notification:__init__( ... )
     if self.body then
         self.bodyTextContainer = self:addNode( TextContainer( self.body ) ):set {
             width = 5;
-            height = math.max( math.ceil( #self.body / TERM_X ), 4 );
+            height = math.min( math.ceil( #self.body / TERM_X ), 4 );
             Y = 4;
             colour = 256;
             X = 2;
