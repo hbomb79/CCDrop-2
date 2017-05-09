@@ -20,8 +20,11 @@ end
 function MNotificationManager:addNotification( notification )
     table.insert( self.notifications, notification )
 
-    notification:configure()
     notificationContent:addNode( notification )
+    notification.width = "$parent.width - 6"
+    notification:refreshDynamicValues() -- TODO: Fix
+    notification:configure()
+    notification:refreshDynamicValues() -- TODO: Fix
 
     _G.tile = notificationTiler:addNode( TileNotification( notification ) ):set {
         id = notification.__ID,

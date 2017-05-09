@@ -26,12 +26,58 @@ function Notification:__init__( ... )
             client:hideActive()
         end
     end)
+end
 
-    if self.body then
-        self.bodyTextContainer = self:addNode( TextContainer( self.body ) ):set( "height", math.min( math.ceil( #self.body / TERM_X ), 4 ) )
+function Notification:generateButtons( X, Y )
+    X, Y = X or 2, Y or 9
+
+    _G.rows = { {} }
+
+    local options = self.options
+    if not options then return 0 end
+
+    local currentWidth = X
+    for i = 1, #options do
+        local name, text = options[ i ][ 1 ], options[ i ][ 2 ]
+
+        currentWidth = currentWidth + 2 + #text
+        if currentWidth > self.width then
+            table.insert( rows, {} )
+            currentWidth = X
+            Y = Y + 2
+        end
+
+        rows[ #rows ].width = ( rows[ #rows ].width or 0 ) + #text + 4
+        local b = self:addNode( Button( text ):set { id = name, Y = Y } ):on( "trigger", function()
+            self:executeCallbacks( name )
+        end )
+
+        table.insert( rows[ #rows ], b )
     end
 
-    self:generateButtons( 2, ( self.body and self.bodyTextContainer.height or 0 ) + 5 )
+    for r = 1, #rows do
+        if not rows[ r ].width then break end
+
+        local startX = math.ceil( self.width / 2 - ( rows[ r ].width / 2 ) + .5 )
+        for b = 1, #rows[ r ] do
+            local button = rows[ r ][ b ]
+            button:set( "X", startX )
+            startX = startX + button.width + 2
+        end
+    end
+
+    return #rows
+end
+
+function Notification:configure()
+    self.Y = -self.height
+
+
+    if self.body then
+        self.bodyTextContainer = self:addNode( TextContainer() ):set { text = self.body, height = math.min( math.ceil( #self.body / TERM_X ), 4 ), width = "$parent.width - 1" }
+    end
+
+    local lines = self:generateButtons( 2, ( self.body and self.bodyTextContainer.height or 0 ) + 5 )
 
     if self.body or self.options then
         self.expandButton = self:addNode( Button( _HOST and "\31" or "Show More" ) ):set( "Y", 4 )
@@ -42,38 +88,12 @@ function Notification:__init__( ... )
             self:removeNode( self.expandButton )
             self.collapsed = false
 
-            self:animate( "notificationExpand", "height", math.ceil( self.body and #self.body / TERM_X or 0 ) + 4 + ( self.options and 2 or 0 ), 0.125, "inOutSine" )
+            self:animate( "notificationExpand", "height", math.ceil( self.body and #self.body / TERM_X or 0 ) + 4 + ( lines * 2 ), 0.125, "inOutSine" )
 
             if self.bodyTextContainer then
                 self.bodyTextContainer.visible = true
             end
         end)
-    end
-end
-
-function Notification:generateButtons( X, Y )
-    X, Y = X or 2, Y or 9
-
-    local options = self.options
-    if not options then return end
-
-    for i = 1, #options do
-        local name, text = options[ i ][ 1 ], options[ i ][ 2 ]
-
-        self:addNode( Button( text ):set { id = name, X = X + ( 4 * i ), Y = Y } ):on( "trigger", function()
-            self:executeCallbacks( name )
-        end )
-
-        X = X + #text
-    end
-end
-
-function Notification:configure()
-    self.width = "$parent.width - 6"
-    self.Y = -self.height
-
-    if self.body then
-        self.bodyTextContainer.width = "$parent.width - 1"
     end
 
     client:schedule( function()
