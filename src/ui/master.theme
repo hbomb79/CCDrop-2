@@ -25,11 +25,11 @@
     </Button>
 
     <TextContainer>
-        <width>5</width>
+        <width dynamic>parent.width - 1</width>
         <Y>4</Y>
         <colour>256</colour>
         <X>2</X>
-        <visible>false</visible>
+        <visible dynamic>not parent.collapsed</visible>
     </TextContainer>
 </Notification>
 

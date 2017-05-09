@@ -59,7 +59,6 @@ function MNotificationManager:removeNotification( notification )
         end
 
         notificationTiler:removeNode( notification.__ID )
-        notificationView:query "#no_notifs":set( "visible", #self.notifications == 0 )
     end
 
     if self.activeNotification == notification then
@@ -81,6 +80,10 @@ function MNotificationManager:updateDisplay()
         if not self.activeNotification then return end
         self.activeNotification:animate( "notificationSlide", "Y", 1, 0.15 )
     end
-
-    notificationView:query "#no_notifs":set( "visible", #self.notifications == 0 )
 end
+
+configureConstructor {
+    argumentTypes = {
+        notifications = "table"
+    }
+}

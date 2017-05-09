@@ -31,7 +31,7 @@ end
 function Notification:generateButtons( X, Y )
     X, Y = X or 2, Y or 9
 
-    _G.rows = { {} }
+    local rows = { {} }
 
     local options = self.options
     if not options then return 0 end
@@ -74,26 +74,21 @@ function Notification:configure()
     self.width = "$parent.width - 6"
 
     if self.body then
-        self.bodyTextContainer = self:addNode( TextContainer() ):set { text = self.body, height = math.min( math.ceil( #self.body / TERM_X ), 4 ), width = "$parent.width - 1" }
+        self.bodyTextContainer = self:addNode( TextContainer( self.body ) ):set( "height", math.min( math.ceil( #self.body / TERM_X ), 4 ) )
     end
 
     local lines = self:generateButtons( 2, ( self.body and self.bodyTextContainer.height or 0 ) + 5 )
 
     if self.body or self.options then
-        self.expandButton = self:addNode( Button( _HOST and "\31" or "Show More" ) ):set( "Y", 4 )
-
-        self.expandButton:addClass "centre"
-        self.expandButton:on("trigger", function()
+        self.expandButton = self:addNode( Button( _HOST and "\31" or "Show More" ) ):set( "Y", 4 ):on("trigger", function()
             self:cancelAutoHide()
             self:removeNode( self.expandButton )
             self.collapsed = false
 
             self:animate( "notificationExpand", "height", math.ceil( self.body and #self.body / TERM_X or 0 ) + 4 + ( lines * 2 ), 0.125, "inOutSine" )
-
-            if self.bodyTextContainer then
-                self.bodyTextContainer.visible = true
-            end
         end)
+
+        self.expandButton:addClass "centre"
     end
 
     client:schedule( function()
@@ -113,6 +108,7 @@ configureConstructor({
     argumentTypes = {
         title = "string",
         body = "string",
-        options = "table"
+        options = "table",
+        collapsed = "boolean"
     }
 }, true)
