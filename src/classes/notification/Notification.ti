@@ -71,7 +71,7 @@ end
 
 function Notification:configure()
     self.Y = -self.height
-
+    self.width = "$parent.width - 6"
 
     if self.body then
         self.bodyTextContainer = self:addNode( TextContainer() ):set { text = self.body, height = math.min( math.ceil( #self.body / TERM_X ), 4 ), width = "$parent.width - 1" }

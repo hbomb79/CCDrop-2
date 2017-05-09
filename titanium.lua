@@ -434,9 +434,11 @@ class DynamicValue {\
     @constructor\
     @desc Initializes the DynamicValue instance. Set's the target (instance), property (string) and equation (string) of the\
           dynamic value, parses the equation and stores the parser on the instance (eq).\
-    @param <Instance - target>, <string - property>, <string - equation>\
+\
+          If 'manualSetter' is passed this function will be called when the dynamic value updates it's property (passing the dynamic value, target, property and, value).\
+    @param <Instance - target>, <string - property>, <string - equation>, [function - manualSetter]\
 ]]\
-function DynamicValue:__init__( target, property, equation )\
+function DynamicValue:__init__( target, property, equation, manualSetter )\
     if not ( Titanium.typeOf( target, \"Node\", true ) and type( property ) == \"string\" and type( equation ) == \"string\" ) then\
         return error(\"Failed to initialise DynamicValue. Expected 'Node Instance', string, string.\", 3 )\
     end\
@@ -444,6 +446,7 @@ function DynamicValue:__init__( target, property, equation )\
     self.target = target\
     self.property = property\
     self.equation = equation\
+    self.manualSetter = manualSetter\
 \
     self.eq = DynamicEqParser( equation )\
     self.compiledEquation = loadstring( self.eq.output, \"DYNAMIC_VALUE_EQUATION@\" .. self.__ID )\
@@ -464,7 +467,12 @@ function DynamicValue:solve()\
 \
         -- Stop MThemeable picking up this update and changing the mainValue to match\
         target.isUpdating = true\
-        self.target[ self.property ] = XMLParser.convertArgType( err, self.propertyType )\
+        if self.manualSetter then\
+            self.manualSetter( self, target, self.property, XMLParser.convertArgType( err, self.propertyType ) )\
+        else\
+            target[ self.property ] = XMLParser.convertArgType( err, self.propertyType )\
+        end\
+\
         target.isUpdating = false\
     else\
         printError( \"[WARNING]: Failed to solve DynamicValue. Dynamic equation failed to execute '\"..tostring( err )..\"'\" )\
@@ -4254,7 +4262,15 @@ function MPropertyManager:MPropertyManager()\
             if type( value ) == \"string\" then\
                 local escaped, rest = value:match \"^(%%*)%$(.*)$\"\
                 if escaped and #escaped % 2 == 0 then\
-                    self:setDynamicValue( DynamicValue( self, property, rest ), true )\
+                    self:setDynamicValue( DynamicValue( self, property, rest, function( dyn, target, property, value )\
+                        -- Because the dynamic value has been created INSIDE a setter, Titanium will NOT automatically call the setter when\
+                        -- the property is changed when this dynamic value solves itself.\
+\
+                        -- To solve the problem, this temporary setter will be used by the dynamic value instead ensuring the setter (below) is called before\
+                        -- exiting the function. It can only be used once, so recursion is not a problem\
+                        target[ setterName ]( target, value )\
+                        dyn.manualSetter = nil\
+                    end ), true )\
 \
                     return\
                 end\

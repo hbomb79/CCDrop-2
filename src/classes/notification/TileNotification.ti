@@ -25,6 +25,7 @@ function TileNotification:__init__( ... )
 end
 
 function TileNotification:configure()
+    self.width = "$parent.width - 2"
     if self.notification.body and #self.notification.body > self.width - 1 then
         self.bodyLabel.text = self.bodyLabel.text:sub( 1, self.width - 6 ) .. "..."
     end
