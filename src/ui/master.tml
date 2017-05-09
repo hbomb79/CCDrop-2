@@ -8,7 +8,7 @@
                 <Button text="Clear All" X="$parent.width - self.width - 1" Y=2 backgroundColour="cyan" colour="white"/>
                 <ScrollContainer id="list" Y=4 width="$parent.width" height="$parent.height - 5"/>
 
-                <Label text="No Notifications!" colour=256 class="centre" id="no_notifs" Y=6 Z=2 visible="$#application.notifications == 0"/>
+                <Label text="No Notifications!" colour=8 class="centre" id="no_notifs" Y=6 Z=2 visible="$#application.notifications == 0"/>
             </Page>
             <Page id="target">
                 <Label text="error" id="notif_title" X=2 Y=4 colour="cyan"/>
