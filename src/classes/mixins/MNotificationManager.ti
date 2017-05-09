@@ -22,7 +22,6 @@ function MNotificationManager:addNotification( notification )
 
     notificationContent:addNode( notification )
     notification.width = "$parent.width - 6"
-    notification:refreshDynamicValues() -- TODO: Fix
     notification:configure()
     notification:refreshDynamicValues() -- TODO: Fix
 
