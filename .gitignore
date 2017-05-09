@@ -1,3 +1,4 @@
 startup
 /.tpm
 build.lua
+titanium.lua
