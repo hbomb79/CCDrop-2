@@ -19,7 +19,7 @@ client:query "#settings":on( "trigger", function() client:revealSettings() end )
 notificationContent = client:query "#notifications".result[ 1 ]
 notificationView = notificationContent:query "#panel".result[ 1 ]
 notificationChanger = notificationView:query "#panel_changer".result[ 1 ]
-notificationTiler = notificationChanger:query "#list".result[ 1 ]
+_G.notificationTiler = notificationChanger:query "#list".result[ 1 ]
 pages = client:query "PageContainer#master".result[ 1 ]
 
 notificationChanger:query "#return":on( "trigger", function() notificationChanger:selectPage "main" end )
