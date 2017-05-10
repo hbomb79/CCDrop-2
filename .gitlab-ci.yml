@@ -1,0 +1,37 @@
+stages:
+  - build
+
+before_script:
+    - apt-get update && apt-get -y install lua5.1 luarocks curl
+    - luarocks install luafilesystem
+    - curl https://gitlab.com/hbomb79/Titanium/raw/develop/bin/package.lua > pkg.lua
+    - curl https://gitlab.com/hbomb79/Titanium/raw/develop/bin/Pickle.lua > pickle.lua
+
+build:
+  stage: build
+  script:
+    - echo "Running development build. Not building minified"
+    - lua5.1 pkg.lua --vfs-expose-global --init="src/CCDrop.lua" --titanium-silent --pre-init="src/ui/splash.lua" --pickle-source="pickle.lua" --output="ccdrop.lua"
+  environment: production
+  artifacts:
+    name: "devel_${CI_BUILD_NAME}_${CI_BUILD_REF_NAME}"
+    paths:
+      - ccdrop.lua
+  except:
+    - tags
+
+build-release:
+  stage: build
+  script:
+    - echo "Running release build. Building minified"
+    - lua5.1 pkg.lua --titanium-minify --vfs-expose-global --init="src/CCDrop.lua" --titanium-silent --pre-init="src/ui/splash.lua" --pickle-source="pickle.lua" --output="ccdrop.lua"
+    - curl https://gitlab.com/hbomb79/Titanium/raw/develop/bin/Minify.lua > minify.lua
+    - lua5.1 pkg.lua --titanium-minify --vfs-expose-global --init="src/CCDrop.lua" --titanium-silent --pre-init="src/ui/splash.lua" --pickle-source="pickle.lua" --minify-source="minify.lua" --output="ccdrop.min.lua --minify"
+  environment: release
+  artifacts:
+    name: "release_${CI_BUILD_REF_NAME}"
+    paths:
+      - ccdrop.lua
+      - ccdrop.min.lua
+  only:
+    - tags
