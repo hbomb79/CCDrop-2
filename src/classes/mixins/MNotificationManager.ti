@@ -24,6 +24,46 @@ function MNotificationManager:addNotification( notification )
     notificationTiler:addNode( TileNotification( notification ) ):set( "id", notification.__ID ):configure()
 
     self:updateDisplay()
+    self.hasNotifications = #self.notifications > 0
+end
+
+function MNotificationManager:generateButtons( target, X, Y, options, cb )
+    X, Y = X or 2, Y or 9
+
+    local rows = { {} }
+
+    local options = options or target.options
+    if not options then return 0 end
+
+    local currentWidth = X
+    for i = 1, #options do
+        local name, text = options[ i ][ 1 ], options[ i ][ 2 ]
+
+        currentWidth = currentWidth + 2 + #text
+        if currentWidth > target.width then
+            table.insert( rows, {} )
+            currentWidth = X
+            Y = Y + 2
+        end
+
+        rows[ #rows ].width = ( rows[ #rows ].width or 0 ) + #text + 4
+        local b = target:addNode( Button( text ):set { id = name, Y = Y } ):on( "trigger", function() cb( name ) end )
+
+        table.insert( rows[ #rows ], b )
+    end
+
+    for r = 1, #rows do
+        if not rows[ r ].width then break end
+
+        local startX = math.ceil( target.width / 2 - ( rows[ r ].width / 2 ) + .5 )
+        for b = 1, #rows[ r ] do
+            local button = rows[ r ][ b ]
+            button:set( "X", startX )
+            startX = startX + button.width + 2
+        end
+    end
+
+    return #rows
 end
 
 function MNotificationManager:expandNotification( notif )
@@ -31,11 +71,11 @@ function MNotificationManager:expandNotification( notif )
     local target = notificationChanger:query "Page#target".result[ 1 ]
     target:query "#notif_title":set( "text", notif.title )
 
-    target:query "#notif_body":set {
-        text = notif.body or "",
-        width = target.width
-    }
+    local body = target:query "#notif_body".result[ 1 ]:set( "text", notif.body or "" )
+    body.height = math.max( 1, math.min( #body.lineConfig.lines, 6 ) )
+
     -- Spawn buttons
+    self:generateButtons( target, 4, body.Y + body.height + 2, notif.options, function( name ) self:closeNotifications(); self:removeNotification( notif ); notif:executeCallbacks( name ) end )
 
     -- Show page
     target.parent:selectPage "target"
@@ -59,6 +99,7 @@ function MNotificationManager:removeNotification( notification )
         end
 
         notificationTiler:removeNode( notification.__ID )
+        self.hasNotifications = #self.notifications > 0
     end
 
     if self.activeNotification == notification then
@@ -84,6 +125,7 @@ end
 
 configureConstructor {
     argumentTypes = {
-        notifications = "table"
+        notifications = "table",
+        hasNotifications = "boolean"
     }
 }

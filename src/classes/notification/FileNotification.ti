@@ -1,13 +1,13 @@
 class FileNotification extends Notification
 
 function FileNotification:__init__( message )
-    self:super( "File Transfer Request", ( message.name and "Client " .. message.name or "Computer " .. message.sender ) .. " is requesting a file transfer", { { "accept", "Accept Transfer" }, { "deny", "Deny Transfer" }, {"block", "Block Sender"}, {"view", "View Files"} } )
+    self:super( "File Transfer Request", "Client "..message.sender .. ( message.name and " (" .. message.name .. ")" or "" ) .. " is requesting a file transfer", { { "accept", "Accept Transfer" }, { "deny", "Deny Transfer" }, {"block", "Block Sender"}, {"view", "View Files"} } )
 
     self:on("accept", function()
-        error "accepted"
+        pages:selectPage "receive"
     end)
 
     self:on("deny", function()
-        client:removeNotification( self )
+
     end)
 end

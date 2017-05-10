@@ -8,11 +8,11 @@
                 <Button text="Clear All" X="$parent.width - self.width - 1" Y=2 backgroundColour="cyan" colour="white"/>
                 <ScrollContainer id="list" Y=4 width="$parent.width" height="$parent.height - 5"/>
 
-                <Label text="No Notifications!" colour=8 class="centre" id="no_notifs" Y=6 Z=2 visible="$#application.notifications == 0"/>
+                <Label text="No Notifications!" colour=8 class="centre" id="no_notifs" Y=6 Z=2 visible="$not application.hasNotifications"/>
             </Page>
             <Page id="target">
                 <Label text="error" id="notif_title" X=2 Y=4 colour="cyan"/>
-                <TextContainer text="error" id="notif_body" X=2 Y=6 width="5" height="$parent.height - 9" colour=1/>
+                <TextContainer text="error" id="notif_body" X=2 Y=6 width="$parent.width - 1" height="$parent.height - 9" colour=1/>
 
                 <Button id="return" text="< All Notifications" width="$#self.text" X=2 Y=2 horizontalAlign="left"/>
             </Page>
@@ -34,5 +34,8 @@
 
         <Button text="Initiate Request" id="initiate" backgroundColour="cyan" Y="${#intro}.Y + {#intro}.height + 2" X="5" colour="1"/>
         <Button text="Settings" Y="${#initiate}.Y" X="$application.width - self.width - 4" backgroundColour="256" colour="1" id="settings"/>
+    </Page>
+    <Page id="receive">
+
     </Page>
 </PageContainer>
