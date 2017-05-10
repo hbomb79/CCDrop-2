@@ -1,25 +1,25 @@
-fs.open("log", "w").close()
-local function log( s, t )
-    local f = fs.open("log", "a")
-    f.writeLine( "["..tostring(s).."] " .. t )
-    f.close()
-end
+-- fs.open("log", "w").close()
+-- local function log( s, t )
+    -- local f = fs.open("log", "a")
+    -- f.writeLine( "["..tostring(s).."] " .. t )
+    -- f.close()
+-- end
 
 local function getTile( tiles, pos )
-    log( "getTile", "Getting tile at pos '"..pos.."'" )
+    -- log( "getTile", "Getting tile at pos '"..pos.."'" )
     for i = 1, #tiles do
         if tiles[ i ].position == pos then
-            log( "getTile", "Returning '"..tostring( tiles[ i ] ) .. "'" )
+            -- log( "getTile", "Returning '"..tostring( tiles[ i ] ) .. "'" )
             return tiles[ i ]
         end
     end
 end
 
 local function incrementPosition( tiles, position, increment )
-    log( "incrementPosition", "Incrementing all tiles at position >= "..position.." by "..increment)
+    -- log( "incrementPosition", "Incrementing all tiles at position >= "..position.." by "..increment)
     for i = 1, #tiles do
         if tiles[ i ].position >= position then
-            log( "incrementPosition", "Incrementing '"..tostring( tiles[ i ] ) .."' from '"..tiles[ i ].position .."'" )
+            -- log( "incrementPosition", "Incrementing '"..tostring( tiles[ i ] ) .."' from '"..tiles[ i ].position .."'" )
             tiles[ i ].position = tiles[ i ].position + increment
         end
     end
