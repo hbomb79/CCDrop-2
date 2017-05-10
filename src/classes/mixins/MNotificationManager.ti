@@ -1,15 +1,50 @@
+fs.open("log", "w").close()
+local function log( s, t )
+    local f = fs.open("log", "a")
+    f.writeLine( "["..tostring(s).."] " .. t )
+    f.close()
+end
+
+local function getTile( tiles, pos )
+    log( "getTile", "Getting tile at pos '"..pos.."'" )
+    for i = 1, #tiles do
+        if tiles[ i ].position == pos then
+            log( "getTile", "Returning '"..tostring( tiles[ i ] ) .. "'" )
+            return tiles[ i ]
+        end
+    end
+end
+
+local function incrementPosition( tiles, position, increment )
+    log( "incrementPosition", "Incrementing all tiles at position >= "..position.." by "..increment)
+    for i = 1, #tiles do
+        if tiles[ i ].position >= position then
+            log( "incrementPosition", "Incrementing '"..tostring( tiles[ i ] ) .."' from '"..tiles[ i ].position .."'" )
+            tiles[ i ].position = tiles[ i ].position + increment
+        end
+    end
+end
+
 abstract class MNotificationManager {
     notifications = {};
     activeNotification = false;
     isPanelOpen = false;
 }
 
+--[[
+    @instance
+    @desc TODO
+]]
 function MNotificationManager:openNotifications()
     notificationView:animate("notifPanel", "Y", 1, .25, "outSine")
 
     self.isPanelOpen = true
 end
 
+--[[
+    @instance
+    @desc TODO
+]]
 function MNotificationManager:closeNotifications()
     notificationView:animate("notifPanel", "Y", -notificationView.height, .25, "inSine")
     notificationChanger:selectPage "main"
@@ -17,16 +52,24 @@ function MNotificationManager:closeNotifications()
     self.isPanelOpen = false
 end
 
+--[[
+    @instance
+    @desc TODO
+]]
 function MNotificationManager:addNotification( notification )
     table.insert( self.notifications, notification )
 
     notificationContent:addNode( notification ):configure()
-    notificationTiler:addNode( TileNotification( notification ) ):set( "id", notification.__ID ):configure()
+    self:insertTileNotification( 1, TileNotification( notification ):set( "id", notification.__ID ) )
 
     self:updateDisplay()
     self.hasNotifications = #self.notifications > 0
 end
 
+--[[
+    @instance
+    @desc TODO
+]]
 function MNotificationManager:removeNotification( notification )
     local function remove( notif )
         for i = 1, #self.notifications do
@@ -36,7 +79,7 @@ function MNotificationManager:removeNotification( notification )
             end
         end
 
-        notificationTiler:removeNode( notification.__ID )
+        self:removeTileNotification( notification.__ID )
         self.hasNotifications = #self.notifications > 0
 
         self:updateDisplay()
@@ -47,6 +90,10 @@ function MNotificationManager:removeNotification( notification )
     end
 end
 
+--[[
+    @instance
+    @desc TODO
+]]
 function MNotificationManager:updateDisplay()
     if not self.isPanelOpen then
         if not self.activeNotification and #self.notifications > 0 then
@@ -59,6 +106,10 @@ function MNotificationManager:updateDisplay()
     end
 end
 
+--[[
+    @instance
+    @desc TODO
+]]
 function MNotificationManager:generateButtons( target, X, Y, options, cb )
     X, Y = X or 2, Y or 9
 
@@ -98,6 +149,10 @@ function MNotificationManager:generateButtons( target, X, Y, options, cb )
     return #rows
 end
 
+--[[
+    @instance
+    @desc TODO
+]]
 function MNotificationManager:expandNotification( notif )
     -- Replace notif title and body
     local target = notificationChanger:query "Page#target".result[ 1 ]
@@ -113,6 +168,10 @@ function MNotificationManager:expandNotification( notif )
     target.parent:selectPage "target"
 end
 
+--[[
+    @instance
+    @desc TODO
+]]
 function MNotificationManager:hideActive( notif, cb )
     if ( not notif or self.activeNotification == notif ) and self.activeNotification then
         self.activeNotification = false
@@ -131,6 +190,10 @@ function MNotificationManager:hideActive( notif, cb )
 end
 
 
+--[[
+    @instance
+    @desc TODO
+]]
 function MNotificationManager:setActiveNotification( activeNotification )
     if activeNotification then
         activeNotification:animate( "notificationSlide", "Y", 1, 0.15 )
@@ -142,7 +205,7 @@ function MNotificationManager:setActiveNotification( activeNotification )
         if self.activeNotification then
             self.activeNotification.hasBeenShown = true
             self.activeNotification:animate( "notificationSlide", "Y", -self.activeNotification.height, 0.25, "inOutCubic", function()
-                self:executeCallbacks( "hiddenActive")
+                self:executeCallbacks( "hiddenActive" )
             end )
         end
 
@@ -150,6 +213,71 @@ function MNotificationManager:setActiveNotification( activeNotification )
     end
 
     self.activeNotification = activeNotification
+end
+
+function MNotificationManager:insertTileNotification( position, tile )
+    tile:configure()
+    tile.position = position
+
+    -- log( tile, "Inserting tile @ position " .. position )
+    local tiles = notificationTiler.nodes
+    if position > #tiles or #tiles == 0 then
+        -- log( tile, "Inserting tile at top of stack using simple method" )
+        -- If the tile position is at the bottom or there are no other tiles, simply add it
+        notificationTiler:addNode( tile:set( "Y", ( #tiles ) * 3 + ( #tiles == 0 and 1 or 2 ) ) )
+        -- incrementPosition( tiles, position, 1 )
+    else
+        -- log( tile, "Animating insertion" )
+        -- Increment all tiles under this by one
+        incrementPosition( tiles, position, 1 )
+
+        -- If the tile position requires the movement of other tiles, animate the tile under it to make way for the new tile, slide the new tile in, set the tile under it to inherit it's Y + height
+        local underTile = getTile( tiles, position + 1 )
+
+        -- print( "@pos " .. position .. ", " .. tostring( underTile ))
+
+        -- log( tile, "Added tile at Y " .. ( position - 1 ) * 3 + 1 .. ", because position: " .. position )
+        -- Next, slide the new tile in from the side
+        notificationTiler:addNode( tile:set { X = "$self.width", Y = ( position - 1 ) * 3 + 1 } )
+
+        -- First, animate the tile under
+        -- log( tile, "Animating under tile ("..tostring( underTile )..") to " .. underTile.Y + 4)
+        underTile:animate( "tileTransition_" .. tile.__ID, "Y", underTile.Y + 4, 0.15, "inCubic", function()
+            -- log( underTile, "Creating dynamic link to '"..tile.id.."'" )
+            underTile.Y = "${TileNotification#"..tile.id.."}.Y + {TileNotification#"..tile.id.."}.height + 1"
+            notificationTiler:cacheContent()
+            tile:animate( "tileEntry_" .. tile.__ID, "X", 2, 0.25, "outCubic" )
+        end)
+    end
+end
+
+function MNotificationManager:removeTileNotification( tileID )
+    -- Find tile position
+    local tiles, pos, tile = notificationTiler.nodes
+    for i = 1, #tiles do
+        if tiles[ i ].id == tileID then pos = tiles[ i ].position; tile = tiles[ i ] end
+    end
+
+    -- Slide tile out
+    tile:animate( "tileTransition_" .. tile.__ID, "X", tile.width, 0.15, "inCubic", function()
+        if pos < #tiles then
+            -- Get tile under this one, and above
+            local aboveTile, underTile = getTile( tiles, pos - 1 ), getTile( tiles, pos + 1 )
+
+            -- Remove the old time
+            notificationTiler:removeNode( tileID )
+
+            -- If there is no tile above Animate underTile to '1'. Otherwise, create a dynamic value link to the tile above)
+            incrementPosition( tiles, underTile.position, -1 )
+            underTile:animate( "tileTransition_" .. tile.__ID, "Y", tile.Y, 0.15, "outCubic", function()
+                underTile.Y = aboveTile and ("${TileNotification#%s}.Y + {TileNotification#%s}.height + 1"):format( aboveTile.id, aboveTile.id ) or 1
+                notificationTiler:cacheContent()
+            end )
+        else
+            -- Remove
+            notificationTiler:removeNode( tileID )
+        end
+    end )
 end
 
 configureConstructor {

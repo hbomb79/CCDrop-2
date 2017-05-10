@@ -6,7 +6,7 @@
                 <Label text="Notification Panel" colour=1 Y=2 X=2/>
 
                 <Button text="Clear All" X="$parent.width - self.width - 1" Y=2 backgroundColour="cyan" colour="white"/>
-                <ScrollContainer id="list" Y=4 width="$parent.width" height="$parent.height - 5"/>
+                <ScrollContainer xScrollAllowed="false" id="list" Y=4 width="$parent.width" height="$parent.height - 5"/>
 
                 <Label text="No Notifications!" colour=8 class="centre" id="no_notifs" Y=6 Z=2 visible="$not application.hasNotifications"/>
             </Page>
