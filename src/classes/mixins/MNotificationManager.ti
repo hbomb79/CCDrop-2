@@ -27,6 +27,38 @@ function MNotificationManager:addNotification( notification )
     self.hasNotifications = #self.notifications > 0
 end
 
+function MNotificationManager:removeNotification( notification )
+    local function remove( notif )
+        for i = 1, #self.notifications do
+            if self.notifications[ i ] == notif then
+                table.remove( self.notifications, i )
+                break
+            end
+        end
+
+        notificationTiler:removeNode( notification.__ID )
+        self.hasNotifications = #self.notifications > 0
+
+        self:updateDisplay()
+    end
+
+    if not self:hideActive( notification, function() remove( notification ) end ) then
+        remove( notification )
+    end
+end
+
+function MNotificationManager:updateDisplay()
+    if not self.isPanelOpen then
+        if not self.activeNotification and #self.notifications > 0 then
+            for i = 1, #self.notifications do
+                if not self.notifications[ i ].hasBeenShown then
+                    self.activeNotification = self.notifications[ i ]
+                end
+            end
+        end
+    end
+end
+
 function MNotificationManager:generateButtons( target, X, Y, options, cb )
     X, Y = X or 2, Y or 9
 
@@ -81,46 +113,43 @@ function MNotificationManager:expandNotification( notif )
     target.parent:selectPage "target"
 end
 
-function MNotificationManager:hideActive( cb )
-    local notif = self.activeNotification
-    if notif then
-        notif:animate( "notificationSlide", "Y", -notif.height, 0.25, "inOutCubic", cb )
-        notif:cancelAutoHide()
-    end
-end
+function MNotificationManager:hideActive( notif, cb )
+    if ( not notif or self.activeNotification == notif ) and self.activeNotification then
+        self.activeNotification = false
 
-function MNotificationManager:removeNotification( notification )
-    local function remove( notif )
-        for i = 1, #self.notifications do
-            if self.notifications[ i ] == notif then
-                table.remove( self.notifications, i )
-                break
-            end
+        if cb then
+            self:on("hiddenActive", function()
+                self:off( "hiddenActive", "autoRemove" )
+                cb()
+            end, "autoRemove")
         end
 
-        notificationTiler:removeNode( notification.__ID )
-        self.hasNotifications = #self.notifications > 0
+        return true
     end
 
-    if self.activeNotification == notification then
-        self:hideActive( function()
-            self.activeNotification = false
-            remove( notification )
-        end )
+    return false
+end
+
+
+function MNotificationManager:setActiveNotification( activeNotification )
+    if activeNotification then
+        activeNotification:animate( "notificationSlide", "Y", 1, 0.15 )
+
+        self:schedule( function()
+            self:hideActive()
+        end, 4, false, "notif_autohide" )
     else
-        remove( notification )
-    end
-end
-
-function MNotificationManager:updateDisplay()
-    if not self.isPanelOpen then
-        if not self.activeNotification then
-            self.activeNotification = self.notifications[ 1 ]
+        if self.activeNotification then
+            self.activeNotification.hasBeenShown = true
+            self.activeNotification:animate( "notificationSlide", "Y", -self.activeNotification.height, 0.25, "inOutCubic", function()
+                self:executeCallbacks( "hiddenActive")
+            end )
         end
 
-        if not self.activeNotification then return end
-        self.activeNotification:animate( "notificationSlide", "Y", 1, 0.15 )
+        self:unschedule "notif_autohide"
     end
+
+    self.activeNotification = activeNotification
 end
 
 configureConstructor {

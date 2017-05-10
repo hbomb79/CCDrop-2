@@ -22,6 +22,11 @@ function CCDrop:__init__( ... )
 
     self:on( "modem_message", self.handleMessage )
     self:on( "peripheral", self.updatePeripherals )
+    self:on( "hiddenActive", function()
+        self:schedule( function()
+            self:updateDisplay()
+        end, 1, "show_new_notif")
+    end)
 end
 
 --[[

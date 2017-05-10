@@ -34,6 +34,11 @@ client:addNotification( FileNotification {
     sender = 10;
 } )
 
+client:addNotification( FileNotification {
+    name = "ME Controller";
+    sender = 11;
+} )
+
 local notifs_close = client:query "#collapse_notifications".result[ 1 ]
 local notifs_open = client:query "#open_notifications".result[ 1 ]
 

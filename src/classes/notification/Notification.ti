@@ -43,7 +43,7 @@ function Notification:configure()
 
     if self.body or self.options then
         self.expandButton = self:addNode( Button( _HOST and "\31" or "Show More" ) ):set( "Y", 4 ):on("trigger", function()
-            self:cancelAutoHide()
+            client:unschedule "notif_autohide"
             self:removeNode( self.expandButton )
             self.collapsed = false
 
@@ -52,17 +52,6 @@ function Notification:configure()
 
         self.expandButton:addClass "centre"
     end
-
-    client:schedule( function()
-        if client.activeNotification == self then
-            client:hideActive()
-        end
-    end, 4, false, "notif_hide" .. self.__ID )
-end
-
-
-function Notification:cancelAutoHide()
-    client:unschedule( "notif_hide" .. self.__ID )
 end
 
 configureConstructor({
