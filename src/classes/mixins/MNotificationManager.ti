@@ -130,7 +130,7 @@ function MNotificationManager:generateButtons( target, X, Y, options, cb )
         end
 
         rows[ #rows ].width = ( rows[ #rows ].width or 0 ) + #text + 4
-        local b = target:addNode( Button( text ):set { id = name, Y = Y } ):on( "trigger", function() cb( name ) end )
+        local b = target:addNode( Button( text ):set { id = name, Y = Y, class = "generated" } ):on( "trigger", function() cb( name ) end )
 
         table.insert( rows[ #rows ], b )
     end
@@ -162,6 +162,10 @@ function MNotificationManager:expandNotification( notif )
     body.height = math.max( 1, math.min( #body.lineConfig.lines, 6 ) )
 
     -- Spawn buttons
+    target:query "Button.generated":each(function( button )
+        target:removeNode( button )
+    end)
+
     self:generateButtons( target, 4, body.Y + body.height + 2, notif.options, function( name ) self:closeNotifications(); self:removeNotification( notif ); notif:executeCallbacks( name ) end )
 
     -- Show page
