@@ -1,25 +1,14 @@
--- fs.open("log", "w").close()
--- local function log( s, t )
-    -- local f = fs.open("log", "a")
-    -- f.writeLine( "["..tostring(s).."] " .. t )
-    -- f.close()
--- end
-
 local function getTile( tiles, pos )
-    -- log( "getTile", "Getting tile at pos '"..pos.."'" )
     for i = 1, #tiles do
         if tiles[ i ].position == pos then
-            -- log( "getTile", "Returning '"..tostring( tiles[ i ] ) .. "'" )
             return tiles[ i ]
         end
     end
 end
 
 local function incrementPosition( tiles, position, increment )
-    -- log( "incrementPosition", "Incrementing all tiles at position >= "..position.." by "..increment)
     for i = 1, #tiles do
         if tiles[ i ].position >= position then
-            -- log( "incrementPosition", "Incrementing '"..tostring( tiles[ i ] ) .."' from '"..tiles[ i ].position .."'" )
             tiles[ i ].position = tiles[ i ].position + increment
         end
     end
@@ -223,36 +212,25 @@ function MNotificationManager:insertTileNotification( position, tile )
     tile:configure()
     tile.position = position
 
-    -- log( tile, "Inserting tile @ position " .. position )
     local tiles = notificationTiler.nodes
     if position > #tiles or #tiles == 0 then
-        -- log( tile, "Inserting tile at top of stack using simple method" )
         -- If the tile position is at the bottom or there are no other tiles, simply add it
         notificationTiler:addNode( tile:set {
             Y = ( #tiles ) * 3 + ( #tiles == 0 and 1 or 2 ),
             X = "$self.width"
-        } )
-
-        tile:animate( "tileEntry_" .. tile.__ID, "X", 2, 0.25, "outCubic" )
-        -- incrementPosition( tiles, position, 1 )
+        } ):animate( "tileEntry_" .. tile.__ID, "X", 2, 0.25, "outCubic" )
     else
-        -- log( tile, "Animating insertion" )
         -- Increment all tiles under this by one
         incrementPosition( tiles, position, 1 )
 
         -- If the tile position requires the movement of other tiles, animate the tile under it to make way for the new tile, slide the new tile in, set the tile under it to inherit it's Y + height
         local underTile = getTile( tiles, position + 1 )
 
-        -- print( "@pos " .. position .. ", " .. tostring( underTile ))
-
-        -- log( tile, "Added tile at Y " .. ( position - 1 ) * 3 + 1 .. ", because position: " .. position )
         -- Next, slide the new tile in from the side
         notificationTiler:addNode( tile:set { X = "$self.width", Y = ( position - 1 ) * 3 + 1 } )
 
         -- First, animate the tile under
-        -- log( tile, "Animating under tile ("..tostring( underTile )..") to " .. underTile.Y + 4)
         underTile:animate( "tileTransition_" .. tile.__ID, "Y", underTile.Y + 4, 0.15, "inCubic", function()
-            -- log( underTile, "Creating dynamic link to '"..tile.id.."'" )
             underTile.Y = "${TileNotification#"..tile.id.."}.Y + {TileNotification#"..tile.id.."}.height + 1"
             notificationTiler:cacheContent()
             tile:animate( "tileEntry_" .. tile.__ID, "X", 2, 0.25, "outCubic" )
