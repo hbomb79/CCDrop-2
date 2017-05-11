@@ -51,6 +51,8 @@ function MNotificationManager:addNotification( notification )
     notificationContent:addNode( notification ):configure()
     self:insertTileNotification( 1, TileNotification( notification ):set( "id", notification.__ID ) )
 
+    if self.isPanelOpen then notification.hasBeenShown = true end
+
     self:updateDisplay()
     self.hasNotifications = #self.notifications > 0
 end
@@ -119,7 +121,8 @@ function MNotificationManager:generateButtons( target, X, Y, options, cb )
         end
 
         rows[ #rows ].width = ( rows[ #rows ].width or 0 ) + #text + 4
-        local b = target:addNode( Button( text ):set { id = name, Y = Y, class = "generated" } ):on( "trigger", function() cb( name ) end )
+        local b = target:addNode( Button( text ):set { id = name, Y = Y } ):on( "trigger", function() cb( name ) end )
+        b:addClass "generated"
 
         table.insert( rows[ #rows ], b )
     end
