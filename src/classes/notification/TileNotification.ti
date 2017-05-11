@@ -35,7 +35,8 @@ function TileNotification:handle( eventObj )
     if not self.super:handle( eventObj ) then return end
 
     if eventObj.main == "MOUSE" and eventObj.button == 1 and ( eventObj.sub == "CLICK" or eventObj.sub == "UP" ) then
-        if eventObj.handled or not eventObj:withinParent( self ) then
+        local within = eventObj:withinParent( self )
+        if eventObj.handled or not within then
             self.active = false
         elseif eventObj.sub == "CLICK" then
             self.active, eventObj.handled = true, true

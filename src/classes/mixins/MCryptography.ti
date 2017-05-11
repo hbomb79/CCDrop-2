@@ -1,4 +1,4 @@
-abstract class MCryptography mixin DiffieHellman
+abstract class MCryptography mixin MDiffieHellman
 
 local lastYield = 0
 function MCryptography:yield()
