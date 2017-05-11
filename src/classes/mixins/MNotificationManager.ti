@@ -228,7 +228,12 @@ function MNotificationManager:insertTileNotification( position, tile )
     if position > #tiles or #tiles == 0 then
         -- log( tile, "Inserting tile at top of stack using simple method" )
         -- If the tile position is at the bottom or there are no other tiles, simply add it
-        notificationTiler:addNode( tile:set( "Y", ( #tiles ) * 3 + ( #tiles == 0 and 1 or 2 ) ) )
+        notificationTiler:addNode( tile:set {
+            Y = ( #tiles ) * 3 + ( #tiles == 0 and 1 or 2 ),
+            X = "$self.width"
+        } )
+
+        tile:animate( "tileEntry_" .. tile.__ID, "X", 2, 0.25, "outCubic" )
         -- incrementPosition( tiles, position, 1 )
     else
         -- log( tile, "Animating insertion" )
