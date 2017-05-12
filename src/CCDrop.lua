@@ -29,37 +29,6 @@ notificationChanger:selectPage "main"
 -- Let click events pass through the container if they don't collide with a child node
 notificationContent.consumeAll = false
 
-client:openNotifications()
-
-client:schedule(function()
-    client:addNotification( FileNotification {
-        name = "Reactor Controller";
-        sender = 10;
-    } )
-
-    client:addNotification( FileNotification {
-        name = "ME Controller";
-        sender = 11;
-    } )
-
-    client:schedule( function()
-        client:addNotification( FileNotification {
-            name = "ME Receiver";
-            sender = 12;
-        } )
-
-        client:addNotification( FileNotification {
-            name = "ME";
-            sender = 13;
-        } )
-
-        client:addNotification( FileNotification {
-            name = "IDK";
-            sender = 14;
-        } )
-    end, 0.6 )
-end, 2)
-
 local notifs_close = client:query "#collapse_notifications".result[ 1 ]
 local notifs_open = client:query "#open_notifications".result[ 1 ]
 
