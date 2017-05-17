@@ -15,11 +15,11 @@ function TileNotification:__init__( ... )
         if notif.body then
             self.bodyLabel = self:addNode( Label( notif.body ) ):set( "id", "body" )
         end
-
-        self.dismissButton = self:addNode( Button "x" ):on( "trigger", function()
-            client:removeNotification( notif )
-        end)
     end
+
+    self.dismissButton = self:addNode( Button "x" ):on( "trigger", function()
+        client:removeNotification( notif )
+    end)
 
     self.consumeAll = false
 end
