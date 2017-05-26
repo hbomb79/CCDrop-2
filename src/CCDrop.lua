@@ -7,8 +7,8 @@ Event.bindEvent( "modem_message", "ModemEvent" )
 _G.client = CCDrop()
 
 -- Load UI
-client:importFromTML "src/ui/master.tml"
 client:addTheme( Theme.fromFile( "master", "src/ui/master.theme" ) )
+client:importFromTML "src/ui/master.tml"
 
 -- Assign callbacks
 client:query "#exit":on( "trigger", function() client:stop() end )

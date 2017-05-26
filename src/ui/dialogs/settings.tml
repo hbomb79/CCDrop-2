@@ -1,0 +1,13 @@
+<ScrollContainer width="$parent.width" height="$parent.height - 1">
+<Label X=2 Y=1 text="Theme" class="header"/>
+<Dropdown X=9 Y=1 width=16 maxHeight=11 Z=2 colour="white">
+    <Option value="1" >Default</Option>
+</Dropdown>
+
+<Label X=2 Y=3 text="Notification Time" class="header"/>
+<Slider X=20 Y=3 width=5/>
+<Label X=2 Y=5 text="No Recieve Mode" class="header"/>
+<Checkbox backgroundColour="white" X=18 Y=5/>
+</ScrollContainer>
+
+<Button X="$parent.width-3" Y="$parent.height" backgroundColour="green" colour="white" text="Accept"/>
