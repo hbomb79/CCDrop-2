@@ -1,6 +1,7 @@
-<Any>
+<PageContainer id="master">
     <colour>lightBlue</colour>
-</Any>
+    <backgroundColour>128</backgroundColour>
+</PageContainer>
 
 <Button>
     <width dynamic>#self.text + 2</width>
