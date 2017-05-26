@@ -1,0 +1,17 @@
+--[[
+	WIP
+]]
+
+class Connection {
+	isOpen = false;
+	encryptionKey = false;
+	owner = false;
+}
+
+--[[
+	@instance
+	@desc WIP
+]]
+function Connection:__init__( ... )
+	--WIP
+end
