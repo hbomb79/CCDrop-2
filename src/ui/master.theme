@@ -1,5 +1,8 @@
-<PageContainer id="master">
+<Any>
     <colour>lightBlue</colour>
+</Any>
+
+<PageContainer id="master">
     <backgroundColour>128</backgroundColour>
 </PageContainer>
 
