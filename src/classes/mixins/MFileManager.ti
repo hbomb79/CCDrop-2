@@ -11,42 +11,44 @@ function MFileManager:isBlacklisted( path )
             return true
         end
     end
-    
+
     return false
 end
 
 function MFileManager:explore( ... )
     -- file queue
     local queue, q = { ... }, 1
-    
+
     if #queue < q then
         error "MFileManager:explore requires at least one path to explore"
     end
-    
+
     -- Output
     local output = {}
-    
+    local blacklistKeyValues = {}
+    for i = 1, #MFileManager.static.blacklist do
+        blacklistKeyValues[ MFileManager.static.blacklist[ i ] ] = true
+    end
+
     -- Queue loop
     while q <= #queue do
         -- Find all files/directories in the path/s.
         local items = fs.list( queue[ q ] )
-        
+
         for i = 1, #items do
-            if not self:isBlacklisted( items[ i ] ) then
+            if not blacklistKeyValues[ items[ i ] ] then
                 -- Combine parent and child directories
-                print( tostring( queue[ q ] ) )
-                print( tostring( items[ i ] ) )
                 local path = fs.combine( queue[ q ], items[ i ] )
-                
+
                 -- Add the path we found to queue
                 table.insert( fs.isDir( path ) and queue or output, path )
             end
         end
-        
+
         -- Increase iterator so that the next queue item is selected
         q = q + 1
     end
-    
+
     -- Return all file paths
     return output
 end
