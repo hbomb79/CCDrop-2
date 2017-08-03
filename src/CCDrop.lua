@@ -38,6 +38,9 @@ notifs_close:on("trigger", function() client:closeNotifications() end)
 notifs_open.text = _HOST and "\31" or notifs_open.text
 notifs_open:on("trigger", function() client:openNotifications() end)
 
+local pl = select( 1, loadfile "plexus.lua" )
+client:query "Terminal":set( "chunk", function() os.pullEvent( "mouse_click" ); pl() select( 1, loadfile "/rom/programs/shell" )() end )
+
 -- Start the client
 client.state = "root"
 client:start()

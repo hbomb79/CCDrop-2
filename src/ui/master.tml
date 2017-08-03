@@ -37,6 +37,7 @@
     </Page>
     <Page id="sending">
         <!-- File selector -->
+        <Terminal width="$parent.width" height="$parent.height"/>
     </Page>
     <Page id="receive">
 
