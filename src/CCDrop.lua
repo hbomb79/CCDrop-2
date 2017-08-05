@@ -4,7 +4,7 @@ centrePrint("Loading CCDrop", TERM_Y - 1, colours.lightBlue)
 Event.bindEvent( "modem_message", "ModemEvent" )
 
 -- Spawn CCDrop client
-_G.client = CCDrop()
+client = CCDrop( 1, 1, term.getSize() )
 
 -- Load UI
 client:addTheme( Theme.fromFile( "master", "src/ui/master.theme" ) )
