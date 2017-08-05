@@ -55,6 +55,8 @@ function MNotificationManager:addNotification( notification )
 
     self:updateDisplay()
     self.hasNotifications = #self.notifications > 0
+
+    return notification
 end
 
 --[[
@@ -79,6 +81,8 @@ function MNotificationManager:removeNotification( notification )
     if not self:hideActive( notification, function() remove( notification ) end ) then
         remove( notification )
     end
+
+    return notification
 end
 
 --[[

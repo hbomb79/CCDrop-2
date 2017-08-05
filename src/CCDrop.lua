@@ -19,7 +19,7 @@ client:query "#settings":on( "trigger", function() client:revealSettings() end )
 notificationContent = client:query "#notifications".result[ 1 ]
 notificationView = notificationContent:query "#panel".result[ 1 ]
 notificationChanger = notificationView:query "#panel_changer".result[ 1 ]
-_G.notificationTiler = notificationChanger:query "#list".result[ 1 ]
+notificationTiler = notificationChanger:query "#list".result[ 1 ]
 pages = client:query "PageContainer#master".result[ 1 ]
 
 notificationChanger:query "#return":on( "trigger", function() notificationChanger:selectPage "main" end )
@@ -38,8 +38,19 @@ notifs_close:on("trigger", function() client:closeNotifications() end)
 notifs_open.text = _HOST and "\31" or notifs_open.text
 notifs_open:on("trigger", function() client:openNotifications() end)
 
-local pl = select( 1, loadfile "plexus.lua" )
-client:query "Terminal":set( "chunk", function() os.pullEvent( "mouse_click" ); pl() select( 1, loadfile "/rom/programs/shell" )() end )
+TI_VFS_RAW._PLEXUS_SELECTOR_CALLBACKS = {
+    cancel = function( plexusInstance )
+        client.state = "root"
+    end,
+
+    confirm = function( plexusInstance )
+        local n = client:addNotification( Notification( "Failed to send", "File transmission is a WIP, as such CCDrop is unable to complete your request. You've been returned to the main menu", { { "ok", "Okay" } } ) )
+        client.state = "root"
+    end
+}
+
+local pl = select( 1, loadfile( "plexus.lua" ) )
+client:query "Terminal":set( "chunk", function() pl("/", "--", "--nosidebar", "--notitle", "--selector", "--noclose", "--nofooter") end )
 
 -- Start the client
 client.state = "root"

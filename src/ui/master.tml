@@ -36,7 +36,7 @@
         <Button text="Settings" Y="${#initiate}.Y" X="$application.width - self.width - 4" backgroundColour="256" colour="1" id="settings"/>
     </Page>
     <Page id="sending">
-        <!-- File selector -->
+        <!-- File selector (Embedded installation of Plexus (installed via TPM)) -->
         <Terminal width="$parent.width" height="$parent.height"/>
     </Page>
     <Page id="receive">
