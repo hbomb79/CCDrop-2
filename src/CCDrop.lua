@@ -1,3 +1,9 @@
+centrePrint("Installing Plexus", TERM_Y - 1, colours.lightBlue)
+-- if not shell.run( "tpm install Plexus --silent" ) then
+    -- TODO: Plexus installation media to TPM
+    -- error( "Failed to install Plexus (via TPM). Cannot continue with execution." )
+-- end
+
 centrePrint("Loading CCDrop", TERM_Y - 1, colours.lightBlue)
 
 -- Bind the custom ModemEvent to 'modem_message' events
@@ -12,7 +18,7 @@ client:importFromTML "src/ui/master.tml"
 
 -- Assign callbacks
 client:query "#exit":on( "trigger", function() client:stop() end )
-client:query "#initiate":on( "trigger", function() client:sendContent() end )
+client:query "#initiate".result[ 1 ]:on( "trigger", function() client:sendContent() end ):set( "enabled", false )
 client:query "#settings":on( "trigger", function() client:revealSettings() end )
 
 -- Cache important nodes
@@ -38,20 +44,9 @@ notifs_close:on("trigger", function() client:closeNotifications() end)
 notifs_open.text = _HOST and "\31" or notifs_open.text
 notifs_open:on("trigger", function() client:openNotifications() end)
 
-TI_VFS_RAW._PLEXUS_SELECTOR_CALLBACKS = {
-    cancel = function( plexusInstance )
-        client.state = "root"
-    end,
-
-    confirm = function( plexusInstance )
-        local n = client:addNotification( Notification( "Failed to send", "File transmission is a WIP, as such CCDrop is unable to complete your request. You've been returned to the main menu", { { "ok", "Okay" } } ) )
-        client.state = "root"
-    end
-}
-
-local pl = select( 1, loadfile( "plexus.lua" ) )
-client:query "Terminal":set( "chunk", function() pl("/", "--", "--nosidebar", "--notitle", "--selector", "--noclose", "--nofooter") end )
-
 -- Start the client
+client:embedPlexus()
+
 client.state = "root"
+client:addThread( Thread( function() os.pullEventRaw "PLEXUS_EMBED"; client:query "#initiate":set( "enabled", true ) end ) )
 client:start()

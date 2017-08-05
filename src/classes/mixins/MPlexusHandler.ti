@@ -1,0 +1,38 @@
+abstract class MPlexusHandler {
+    embeddedPlexus = false;
+}
+
+function MPlexusHandler:embedPlexus()
+    if not fs.exists "plexus.lua" then
+        self:addNotification( Notification( "Failed to embed", "File sending unavailable -- Failed to embed Plexus (file not found).\nResolve installation issues and retry.", { { "ok", "Okay" } } ) )
+        return
+    end
+
+    TI_VFS_RAW._PLEXUS_START = function( plexusInstance )
+        if not client.embeddedPlexus then
+            client.embeddedPlexus = plexusInstance
+            self:handlePlexus()
+        end
+    end
+
+    local pl = select( 1, loadfile( "plexus.lua" ) )
+    client:query "Terminal":set( "chunk", function() pl( "/", "--", "--nosidebar", "--notitle", "--selector", "--noclose", "--nofooter" ); end )
+end
+
+function MPlexusHandler:handlePlexus()
+    local pl = self.embeddedPlexus
+    pl:on( "cancel", function()
+        pl.resolvedSelections = {}; pl:goToDirectory( "/", true )
+
+        self.state = "root"
+    end )
+
+    pl:on( "confirm", function()
+        pl.resolvedSelections = {}; pl:goToDirectory( "/", true )
+
+        self:addNotification( Notification( "Failed to send", "File transmission is a WIP, as such CCDrop is unable to complete your request. You've been returned to the main menu", { { "ok", "Okay" } } ) )
+        self.state = "root"
+    end )
+
+    os.queueEvent "PLEXUS_EMBED"
+end
