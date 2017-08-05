@@ -30,7 +30,7 @@
 <PageContainer id="master" width="$application.width" height="$application.height - 2" Y=3>
     <Page id="root">
         <Label class="header centre" text="Welcome" Y=3/>
-        <TextContainer id="intro" Y=7 width="$application.width" height="6" horizontalAlign="centre" text="Welcome to CCDrop, a secure, easy to use file transfer program for ComputerCraft.\n\nIf you get a request from another user, we will let you know."/>
+        <TextContainer id="intro" Y=7 width="$application.width" height="6" horizontalAlign="centre" text="Welcome to CCDrop, a secure, easy to use file transfer program for ComputerCraft.\n\nIf you get a transfer request from another user you'll be notified."/>
 
         <Button text="Initiate Request" id="initiate" backgroundColour="cyan" Y="${#intro}.Y + {#intro}.height + 2" X="5" colour="1"/>
         <Button text="Settings" Y="${#initiate}.Y" X="$application.width - self.width - 4" backgroundColour="256" colour="1" id="settings"/>
