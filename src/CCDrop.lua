@@ -49,4 +49,6 @@ client:embedPlexus()
 
 client.state = "root"
 client:addThread( Thread( function() os.pullEventRaw "PLEXUS_EMBED"; client:query "#initiate":set( "enabled", true ) end ) )
+
+client:checkForTrouble()
 client:start()

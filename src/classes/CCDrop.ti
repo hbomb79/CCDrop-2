@@ -62,6 +62,15 @@ function CCDrop:updatePeripherals()
     self:openChannels()
 end
 
+function CCDrop:checkForTrouble()
+    self:updatePeripherals()
+    if not self.modem then
+        self.errorState = "rednet"
+    else
+        self.errorState = false
+    end
+end
+
 --[[
     @instance
     @desc
@@ -88,15 +97,33 @@ function CCDrop:sendContent()
         end
     end
 
-    self:reviewContent( paths )
-end
+    if self.connection then
+        local n = self:addNotification( Notification( "Failed to send", "File sending unavailable -- There is already an active connection.", { { "ok", "Okay" }, { "close", "Terminate Connection" } } ) )
+        n:on("close", function()
+            local diag = self:addDialog( DialogWindow( 1, 1, 37, 8, "Are you sure?", "Terminating the active connection will cause incomplete data transfer." ) )
+            diag:set {
+                X = "$parent.width / 2 - self.width / 2",
+                Y = "$parent.height / 2 - self.height / 2"
+            }
 
---[[
-    @instance
-    @desc WIP
-]]
-function CCDrop:reviewContent( paths )
-    error "hit"
+            diag:addNode( Button( "Cancel" ) ):on( "trigger", function()
+                self:removeDialog( diag )
+            end)
+            diag:addNode( Button( "Terminate Anyway" ) ):on( "trigger", function( this )
+                -- self.connection:close( true )
+                diag:set { title = "Terminating", closeable = false, body = "Attempting to negotiate connection termination with other client" }
+
+                diag:clearNodes()
+                diag:addNode( Button "Terminate Forcefully" ):on("trigger", function()
+                    -- self.connection:terminate()
+                    self:removeDialog( diag )
+                end)
+            end)
+        end)
+    else
+        -- Display computer picker
+        self:discoverClients()
+    end
 end
 
 --[[

@@ -13,12 +13,14 @@ abstract class MRednet {
     @instance
     @desc
 ]]
-function MRednet:getModem()
+function MRednet:getModems()
     self.modem = peripheral.find "modem"
 end
 
 function MRednet:openChannels()
     local modem = self.modem
+    if not modem then return end
+
     for channelName, channel in pairs( MRednet.channels ) do
         if not modem.isOpen( channel ) then
             modem.open( channel )
