@@ -1,10 +1,10 @@
-centrePrint("Installing Plexus", TERM_Y - 1, colours.lightBlue)
+centrePrint "Checking Plexus for updates"
 -- if not shell.run( "tpm install Plexus --silent" ) then
     -- TODO: Plexus installation media to TPM
     -- error( "Failed to install Plexus (via TPM). Cannot continue with execution." )
 -- end
 
-centrePrint("Loading CCDrop", TERM_Y - 1, colours.lightBlue)
+centrePrint "Loading CCDrop"
 
 -- Bind the custom ModemEvent to 'modem_message' events
 Event.bindEvent( "modem_message", "ModemEvent" )
