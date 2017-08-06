@@ -9,29 +9,32 @@ function MPlexusHandler:embedPlexus()
     end
 
     TI_VFS_RAW._PLEXUS_START = function( plexusInstance )
-        if not client.embeddedPlexus then
-            client.embeddedPlexus = plexusInstance
-            self:handlePlexus()
-        end
+        client.embeddedPlexus = plexusInstance
+        self:handlePlexus()
     end
 
-    local pl = select( 1, loadfile( "plexus.lua" ) )
-    client:query "Terminal":set( "chunk", function() pl( "/", "--", "--nosidebar", "--notitle", "--selector", "--noclose", "--nofooter" ); end )
+    local pl, terminal = select( 1, loadfile( "plexus.lua" ) ), client:query "Terminal".result[ 1 ]
+    terminal:set( "chunk", function() pl( "/", "--", "--nosidebar", "--notitle", "--selector", "--noclose", "--nofooter" ); end )
+    terminal.thread:on("finish", function( thread, ex )
+        local n = self:addNotification( Notification( "Plexus closed unexpectedly", "The running installation of Plexus has " .. ( ex and "crashed ("..ex..")" or "exited unexpectedly." ), { { "return", "Return to Home" }, { "retry", "Reload Plexus" } } ) )
+
+        n:on("retry", function() self:embedPlexus() end)
+        n:on("return", function() self.state = "root" end )
+    end)
+
+    terminal.thread.crashSilently = true
 end
 
 function MPlexusHandler:handlePlexus()
     local pl = self.embeddedPlexus
     pl:on( "cancel", function()
         pl.resolvedSelections = {}; pl:goToDirectory( "/", true )
-
         self.state = "root"
     end )
 
     pl:on( "confirm", function()
+        self:sendContent()
         pl.resolvedSelections = {}; pl:goToDirectory( "/", true )
-
-        self:addNotification( Notification( "Failed to send", "File transmission is a WIP, as such CCDrop is unable to complete your request. You've been returned to the main menu", { { "ok", "Okay" } } ) )
-        self.state = "root"
     end )
 
     os.queueEvent "PLEXUS_EMBED"

@@ -18,7 +18,7 @@ client:importFromTML "src/ui/master.tml"
 
 -- Assign callbacks
 client:query "#exit":on( "trigger", function() client:stop() end )
-client:query "#initiate".result[ 1 ]:on( "trigger", function() client:sendContent() end ):set( "enabled", false )
+client:query "#initiate".result[ 1 ]:on( "trigger", function() client:pickContent() end ):set( "enabled", false )
 client:query "#settings":on( "trigger", function() client:revealSettings() end )
 
 -- Cache important nodes

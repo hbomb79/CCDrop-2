@@ -1,10 +1,10 @@
-class CCDrop extends Application mixin MRednet mixin MCryptography mixin MNotificationManager mixin MFileManager mixin MPlexusHandler {
+class CCDrop extends Application mixin MRednet mixin MNotificationManager mixin MFileManager mixin MPlexusHandler {
     backgroundColour = 128;
     colour = 1;
 
     allowRequests = true;
 
-    state = false; -- can be sending, receiving, connecting, discovering, root or error
+    state = false; -- can be sending, picking, receiving, discovering, root or error
 }
 
 --[[
@@ -66,8 +66,37 @@ end
     @instance
     @desc
 ]]
+function CCDrop:pickContent()
+    self.state = "picking"
+end
+
+--[[
+    @instance
+    @desc
+]]
 function CCDrop:sendContent()
-    self.state = "sending"
+    local resolved = self.embeddedPlexus.resolvedSelections
+    local paths = {}
+
+    for path, selectionState in pairs( resolved ) do
+        if selectionState == 2 then
+            if not fs.exists( path ) then
+                self:throw( "Failed to send", "Could not begin file transmission because selected files do not exist ("..path.."). Revise file selection and retry." )
+            elseif not fs.isDir( path ) then
+                paths[ #paths + 1 ] = path
+            end
+        end
+    end
+
+    self:reviewContent( paths )
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function CCDrop:reviewContent( paths )
+    error "hit"
 end
 
 --[[
