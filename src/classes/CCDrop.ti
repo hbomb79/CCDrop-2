@@ -34,27 +34,25 @@ end
     @desc
 ]]
 function CCDrop:setState( state )
-    pages:selectPage( state )
+    pages:selectPage( self.errorState or state )
     self.state = state
 end
 
+--[[
+    @instance
+    @desc WIP
+]]
+function CCDrop:setErrorState( errorState )
+    pages:selectPage( errorState or self.state )
+    self.errorState = errorState
+end
+
 function CCDrop:revealSettings()
-    local win = Window():set {
-        X = "$application.width * 0.2",
-        Y = "$application.height * 0.1",
-        width = "$application.width * 0.6",
-        height = "$application.height * 0.8",
-        backgroundColour = 256,
-        title = "Settings",
-        resizeable = false,
-        moveable = false
-    }
-    win:importFromTML "src/ui/dialogs/settings.tml"
-    self:addDialog( win )
+    --TODO
 end
 
 function CCDrop:concealSettings()
-
+    --TODO
 end
 
 function CCDrop:updatePeripherals()
