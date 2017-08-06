@@ -4,7 +4,7 @@ abstract class MPlexusHandler {
 
 function MPlexusHandler:embedPlexus()
     if not fs.exists "plexus.lua" then
-        self:addNotification( Notification( "Failed to embed", "File sending unavailable -- Failed to embed Plexus (file not found).\nResolve installation issues and retry.", { { "ok", "Okay" } } ) )
+        self:addNotification( Notification( "File sending disabled", "Failed to embed Plexus (file not found).\nResolve installation issues and retry.", { { "ok", "Okay" } } ) )
         return
     end
 

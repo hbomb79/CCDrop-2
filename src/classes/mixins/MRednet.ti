@@ -43,6 +43,7 @@ end
 ]]
 function MRednet:send( channel, replyChannel, content, extra )
     local modem = self.modem
+    if not modem then return end
     modem.transmit( channel, replyChannel, self:formatMessage( content, extra ) )
 end
 
@@ -65,8 +66,8 @@ function MRednet:handleMessage( message )
     elseif self.state == "discovering" then
         if message.content == "PONG" and message.channel == MRednet.channels.REPLY then
             -- Our ping revealed a client
-            if self.timeout then os.cancelTimer( self.timeout ) end
-            self.timeout = os.startTimer( 1 )
+            if self.discoveryTimeout then os.cancelTimer( self.discoveryTimeout ) end
+            self.discoveryTimeout = os.startTimer( 1 )
 
             table.insert( self.discovered, { message.sender, message.name } )
         end
@@ -78,7 +79,7 @@ end
     @desc
 ]]
 function MRednet:discoverClients()
-    self.timeout = os.startTimer( 3 )
+    self.discoveryTimeout = os.startTimer( 3 )
     self.discovered = {}
 
     self:send( MRednet.channels.DISCOVER, MRednet.channels.REPLY, "PING" )
