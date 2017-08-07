@@ -51,8 +51,9 @@
     <Page id="receive">
 
     </Page>
-    <Page id="rednet">
-        <Label class="header centre" text="No Rednet Modem Found" Y=3/>
-        <TextContainer id="intro" Y=7 width="$application.width - 4" X="3" height="6" horizontalAlign="centre" text="CCDrop relies on the ability to communicate via rednet in order to transfer data. \n\nNo rednet modem can be found on this computer -- please attach one now"/>
+    <Page id="error">
+        <Label class="header centre" id="title" Y=3>ERR</Label>
+        <TextContainer id="body" Y=7 width="$application.width - 4" X="3" height="6" horizontalAlign="centre" text="ERROR"/>
+        <Button text="Return to home" Y="15" backgroundColour="cyan" colour="1" activeBackgroundColour="lightBlue" class="centre" id="return"/>
     </Page>
 </PageContainer>

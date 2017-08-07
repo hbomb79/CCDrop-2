@@ -44,6 +44,15 @@ notifs_close:on("trigger", function() client:closeNotifications() end)
 notifs_open.text = _HOST and "\31" or notifs_open.text
 notifs_open:on("trigger", function() client:openNotifications() end)
 
+client:query "Page#error Button#return":on("trigger", function()
+	local t = client.trouble
+	client:checkForTrouble()
+
+	if client.trouble == t then
+		client:addNotification( Notification( "Unable to return home", "CCDrop is still experiencing the same error, so it cannot return home. Resolve this issue before attempting to return home.", { { "ok", "Okay" } } ) )
+	end
+end)
+
 -- Start the client
 client:embedPlexus()
 

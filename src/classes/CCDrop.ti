@@ -1,4 +1,11 @@
 class CCDrop extends Application mixin MRednet mixin MNotificationManager mixin MFileManager mixin MPlexusHandler {
+    static = {
+        TROUBLE_CODES = {
+            unknown = { "Unknown error occured", "CCDrop has encountered a problem, however it has not been caught correctly by the application.\n\nIf this issue persists, please report on the CC forums or via GitLab issues", true },
+            rednet = { "Rednet modem not found", "CCDrop relies on rednet to transmit files between clients.\n\nNo modem can be found on your computer, please attach one in order to continue", true }
+        }
+    };
+
     backgroundColour = 128;
     colour = 1;
 
@@ -34,17 +41,8 @@ end
     @desc
 ]]
 function CCDrop:setState( state )
-    pages:selectPage( self.errorState or state )
-    self.state = state
-end
-
---[[
-    @instance
-    @desc WIP
-]]
-function CCDrop:setErrorState( errorState )
-    pages:selectPage( errorState or self.state )
-    self.errorState = errorState
+    self.state = state or self.state
+    pages:selectPage( self.trouble and "error" or self.state )
 end
 
 function CCDrop:revealSettings()
@@ -60,12 +58,25 @@ function CCDrop:updatePeripherals()
     self:openChannels()
 end
 
+function CCDrop:setTrouble( code )
+    self.trouble = code or false
+    if code then
+        local trouble = CCDrop.static.TROUBLE_CODES[ code ] or CCDrop.static.TROUBLE_CODES.unknown
+        self:query "Page#error .header#title".result[ 1 ].text = trouble[ 1 ]
+        self:query "Page#error TextContainer#body".result[ 1 ].text = trouble[ 2 ]
+        self:query "Page#error Button#return":set( "visible", trouble[ 3 ] )
+    end
+
+    self:setState()
+end
+
 function CCDrop:checkForTrouble()
     self:updatePeripherals()
     if not self.modem then
-        self.errorState = "rednet"
+        -- self.trouble = "rednet"
+        if os.clock() < 20 then self.trouble = "unknown" else self.trouble = false end
     else
-        self.errorState = false
+        self.trouble = false
     end
 end
 
