@@ -3,8 +3,7 @@
 ]]
 
 class Connection {
-	isOpen = false;
-	encryptionKey = false;
+	open = false;
 	owner = false;
 }
 
@@ -12,6 +11,35 @@ class Connection {
 	@instance
 	@desc WIP
 ]]
-function Connection:__init__( ... )
-	--WIP
+function Connection:__init__( ccdrop, id, paths )
+    if ccdrop.activeConnection and ccdrop.activeConnection ~= self then
+        if ccdrop.activeConnection.open then
+            error("Cannot spawn Connection instance targetting '"..tostring( id ).."'. An active connection is already open on the CCDrop instance.")
+        else
+            ccdrop.activeConnection:destroy( true )
+        end
+    else
+        ccdrop.activeConnection = self
+    end
+
+    self.owner = ccdrop
+    self.target = id
+    self.paths = paths
+end
+
+--[[
+    @instance
+    @desc Ensures the target is still active and is willing and able to accept the files proposed by the transfer
+]]
+function Connection:confirmTransfer()
+    self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "FILE_PROMPT", { file_list = self.paths, target = self.target } )
+    return Deferred()
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function Connection:handleMessage( message, content )
+
 end

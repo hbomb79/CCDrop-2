@@ -52,7 +52,7 @@ function CCDrop:__init__( ... )
             marginRight = 2, marginBottom = 1,
             verticalAlign = "centre"
         } ):on( "trigger", function( button )
-            -- self:
+            self:connectToClient( client[ 1 ] )
         end )
 
         display:resolveFluidPositions()
@@ -180,7 +180,7 @@ function CCDrop:sendContent()
             end)
         end)
     else
-        self.state = "discovering"
+        self.sending, self.state = paths, "discovering"
         self:discoverClients()
     end
 end

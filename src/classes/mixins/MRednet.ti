@@ -60,18 +60,19 @@ function MRednet:handleMessage( message )
     if content.content == "PING" and message.channel == MRednet.channels.DISCOVER and content.sender and self.allowRequests then
         -- A client has pinged us, respond so it knows we are here
         self:send( message.replyChannel, message.replyChannel, "PONG", { target = content.sender } )
-    elseif content.content == "FILE_PROMPT" then
+    elseif content.content == "FILE_PROMPT" and message.channel == MRednet.channels.SEND then
         -- A client wants to send us a file/folder
-        self:notify( FileNotification( message ) )
-    elseif self.state == "discovering" then
-        if content.content == "PONG" and message.channel == MRednet.channels.REPLY then
-            -- Our ping revealed a client
-            if self.discoveryTimeout then os.cancelTimer( self.discoveryTimeout ) end
-            self.discoveryTimeout = os.startTimer( 1 )
+        self:addNotification( FileNotification( content ) )
+    elseif self.state == "discovering" and content.content == "PONG" and message.channel == MRednet.channels.REPLY then
+        -- Our ping revealed a client
+        if self.discoveryTimeout then os.cancelTimer( self.discoveryTimeout ) end
+        self.discoveryTimeout = os.startTimer( 1 )
 
-            table.insert( self.discovered, { content.sender, content.name } )
-            self:executeCallbacks( "DISCOVERED_CLIENT", { content.sender, content.name } )
-        end
+        table.insert( self.discovered, { content.sender, content.name } )
+        self:executeCallbacks( "DISCOVERED_CLIENT", { content.sender, content.name } )
+    elseif self.activeConnection then
+        -- Pass the message to the currently open connection for handling (file transfer)
+        self.activeConnection:handleMessage( message, content )
     end
 end
 

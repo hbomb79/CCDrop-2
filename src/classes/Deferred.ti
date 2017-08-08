@@ -1,0 +1,34 @@
+--[[
+    WIP
+]]
+
+class Deferred mixin MCallbackManager {
+    static = {
+        methods = { "success", "fail", "done" }
+    }
+}
+
+function Deferred:__init__()
+    local ms = Deferred.static.methods
+    for i = 1, #ms do
+        self[ ms[ i ] ] = function( _, fn ) self:on( ms[ i ], fn ); return self end
+    end
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function Deferred:resolve( ... )
+    self:executeCallbacks( "done", ... )
+    self:executeCallbacks( "success", ... )
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function Deferred:reject( ... )
+    self:executeCallbacks( "done", ... )
+    self:executeCallbacks( "fail", ... )
+end

@@ -11,8 +11,17 @@ abstract class MConnectionManager {
     @instance
     @desc WIP
 ]]
-function MConnectionManager:connectToClient()
+function MConnectionManager:connectToClient( clientID )
+    if self.activeConnection then return end
 
+    local connection = Connection( self, clientID, self.sending )
+    connection:confirmTransfer():success( function()
+        -- Connection handshake accepted; begin transfer
+    end ):fail( function()
+        -- Connection failed; Abort
+    end )
+
+    self.state = "sending"
 end
 
 --[[
