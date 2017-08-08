@@ -1,7 +1,7 @@
 centrePrint "Checking Plexus for updates"
 
 PLEXUS_VERSION = "v0.1.0-alpha.1"
-shell.run( ( "tpm --disposable --depend %s install Plexus:%s --silent --fetch" ):format( shell.getRunningProgram(), PLEXUS_VERSION ) )
+shell.run( ( "/.tpm/bin/tpm --disposable --depend %s install Plexus:%s --silent --fetch" ):format( shell.getRunningProgram(), PLEXUS_VERSION ) )
 
 centrePrint "Loading CCDrop"
 
