@@ -3,8 +3,9 @@ abstract class MPlexusHandler {
 }
 
 function MPlexusHandler:embedPlexus()
-    if not fs.exists "plexus.lua" then
-        self:addNotification( Notification( "File sending disabled", "Failed to embed Plexus (file not found).\nResolve installation issues and retry.", { { "ok", "Okay" } } ) )
+    local path = "/.tpm/packages/Plexus/" .. PLEXUS_VERSION
+    if not fs.exists( path ) then
+        self:addNotification( Notification( "File sending disabled", ( "Failed to embed Plexus (file not found).\n\nTry updating or reinstalling CCDrop manually via 'tpm install CCDrop --force'. Manually installing Plexus using 'tpm install Plexus:" .. PLEXUS_VERSION .."', may also help resolve issues." ), { { "ok", "Okay" } } ) )
         return
     end
 
@@ -13,7 +14,7 @@ function MPlexusHandler:embedPlexus()
         self:handlePlexus()
     end
 
-    local pl, terminal = select( 1, loadfile( "plexus.lua" ) ), client:query "Terminal".result[ 1 ]
+    local pl, terminal = select( 1, loadfile( path ) ), client:query "Terminal".result[ 1 ]
     terminal:set( "chunk", function() pl( "/", "--", "--nosidebar", "--notitle", "--selector", "--noclose", "--nofooter" ); end )
     terminal.thread:on("finish", function( thread, ex )
         local n = self:addNotification( Notification( "Plexus closed unexpectedly", "The running installation of Plexus has " .. ( ex and "crashed ("..ex..")" or "exited unexpectedly." ), { { "return", "Return to Home" }, { "retry", "Reload Plexus" } } ) )
