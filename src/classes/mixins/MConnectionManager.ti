@@ -1,0 +1,40 @@
+--[[
+    WIP
+]]
+
+abstract class MConnectionManager {
+    connections = {};
+    activeConnection = false;
+}
+
+--[[
+    @instance
+    @desc WIP
+]]
+function MConnectionManager:connectToClient()
+
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function MConnectionManager:addConnection()
+
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function MConnectionManager:removeConnection()
+
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function MConnectionManager:terminateAll( forcefull )
+
+end

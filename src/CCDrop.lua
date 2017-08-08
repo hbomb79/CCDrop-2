@@ -48,10 +48,16 @@ client:query "Page#error Button#return":on("trigger", function()
 	local t = client.trouble
 	client:checkForTrouble()
 
+    local target = CCDrop.static.TROUBLE_CODES[ t ][ 3 ]
 	if client.trouble == t then
 		client:addNotification( Notification( "Unable to return home", "CCDrop is still experiencing the same error, so it cannot return home. Resolve this issue before attempting to return home.", { { "ok", "Okay" } } ) )
-	end
+	elseif type( target ) == "string" then
+        client.state = target
+    end
 end)
+
+client:query "Button#cancelDiscovery":on( "trigger", function() client.state = "picking"; client.sending = false end )
+client:query "Button#discoverRefresh":on( "trigger", function() if not client.discovering then client:discoverClients() end end )
 
 -- Start the client
 client:embedPlexus()

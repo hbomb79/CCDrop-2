@@ -52,24 +52,25 @@ end
     @desc
 ]]
 function MRednet:handleMessage( message )
-    message = textutils.unserialise( message.content )
-    if not message or ( message.target and message.target ~= os.getComputerID() ) then
+    local content = textutils.unserialise( message.content )
+    if not message or ( content.target and content.target ~= os.getComputerID() ) then
         return
     end
 
-    if message.content == "PING" and message.channel == MRednet.channels.DISCOVER and message.sender and self.allowRequests then
+    if content.content == "PING" and message.channel == MRednet.channels.DISCOVER and content.sender and self.allowRequests then
         -- A client has pinged us, respond so it knows we are here
-        self:send( message.replyChannel, message.replyChannel, "PONG", { target = message.sender } )
-    elseif message.content == "FILE_PROMPT" then
+        self:send( message.replyChannel, message.replyChannel, "PONG", { target = content.sender } )
+    elseif content.content == "FILE_PROMPT" then
         -- A client wants to send us a file/folder
         self:notify( FileNotification( message ) )
     elseif self.state == "discovering" then
-        if message.content == "PONG" and message.channel == MRednet.channels.REPLY then
+        if content.content == "PONG" and message.channel == MRednet.channels.REPLY then
             -- Our ping revealed a client
             if self.discoveryTimeout then os.cancelTimer( self.discoveryTimeout ) end
             self.discoveryTimeout = os.startTimer( 1 )
 
-            table.insert( self.discovered, { message.sender, message.name } )
+            table.insert( self.discovered, { content.sender, content.name } )
+            self:executeCallbacks( "DISCOVERED_CLIENT", { content.sender, content.name } )
         end
     end
 end
@@ -79,9 +80,11 @@ end
     @desc
 ]]
 function MRednet:discoverClients()
-    self.discoveryTimeout = os.startTimer( 3 )
-    self.discovered = {}
+    self.discoveryTimeout, self.discovered, self.discovering = os.startTimer( 3 ), {}, true
+
+    self:query "Page#discovering #discoveryState":set { text = "Looking for clients", visible = true, colour = colours.lightBlue }
+    self:query "Page#discovering #discoveryDisplay".result[ 1 ]:set( "visible", false ):clearNodes()
+    self:query "Page#discovering Button#discoverRefresh":set( "enabled", false )
 
     self:send( MRednet.channels.DISCOVER, MRednet.channels.REPLY, "PING" )
-    self.state = "discovering"
 end

@@ -1,8 +1,10 @@
-class CCDrop extends Application mixin MRednet mixin MNotificationManager mixin MFileManager mixin MPlexusHandler {
+class CCDrop extends Application mixin MRednet mixin MNotificationManager mixin MFileManager mixin MPlexusHandler mixin MConnectionManager {
     static = {
         TROUBLE_CODES = {
             unknown = { "Unknown error occured", "CCDrop has encountered a problem, however it has not been caught correctly by the application.\n\nIf this issue persists, please report on the CC forums or via GitLab issues", true },
-            rednet = { "Rednet modem not found", "CCDrop relies on rednet to transmit files between clients.\n\nNo modem can be found on your computer, please attach one in order to continue", true }
+            rednet = { "Rednet modem not found", "CCDrop relies on rednet to transmit files between clients.\n\nNo modem can be found on your computer, please attach one in order to continue" },
+            noFiles = { "No files were selected", "CCDrop cannot continue begin to transmit files because you selected no files. Select files before trying again.", true },
+            invalidFiles = { "Invalid Paths", "CCDrop cannot begin file transfer because some of the paths chosen do not exist.\n\nRevise paths and try again", true }
         }
     };
 
@@ -30,11 +32,37 @@ function CCDrop:__init__( ... )
     self:on( "modem_message", self.handleMessage )
     self:on( "peripheral", self.checkForTrouble )
     self:on( "peripheral_detach", self.checkForTrouble )
+    self:on( "timer", self.handleTimer )
     self:on( "hiddenActive", function()
         self:schedule( function()
             self:updateDisplay()
         end, 1, "show_new_notif")
     end)
+
+    self:on( "DISCOVERED_CLIENT", function( ccdrop, client )
+        if self.state ~= "discovering" then return end
+
+        self:query "Page#discovering #discoveryState":set( "visible", false )
+        local display = self:query "Page#discovering #discoveryDisplay".result[ 1 ]:set( "visible", true )
+        display.fluidPositioning, display.positioning = true, "fluid"
+
+        display:addNode( Button( tostring( client[ 1 ] ) ):set {
+            backgroundColour = colours.cyan, colour = 1,
+            width = "$#self.text + 4", height = 3,
+            marginRight = 2, marginBottom = 1,
+            verticalAlign = "centre"
+        } ):on( "trigger", function( button )
+            -- self:
+        end )
+
+        display:resolveFluidPositions()
+    end )
+
+    self:on( "DISCOVERY_FINISH", function()
+        if self.state == "discovering" and #self.discovered == 0 then
+            self:query "Page#discovering #discoveryState":set { text = "No CCDrop clients found", colour = colours.red }
+        end
+    end, "DISCOVERY_DISPLAY")
 end
 
 --[[
@@ -46,19 +74,35 @@ function CCDrop:setState( state )
     pages:selectPage( self.trouble and "error" or self.state )
 end
 
+--[[
+    @instance
+    @desc
+]]
 function CCDrop:revealSettings()
     --TODO
 end
 
+--[[
+    @instance
+    @desc
+]]
 function CCDrop:concealSettings()
     --TODO
 end
 
+--[[
+    @instance
+    @desc
+]]
 function CCDrop:updatePeripherals()
     self:getModems()
     self:openChannels()
 end
 
+--[[
+    @instance
+    @desc
+]]
 function CCDrop:setTrouble( code )
     self.trouble = code or false
     if code then
@@ -71,6 +115,10 @@ function CCDrop:setTrouble( code )
     self:setState()
 end
 
+--[[
+    @instance
+    @desc
+]]
 function CCDrop:checkForTrouble()
     self:updatePeripherals()
     if not self.modem then
@@ -93,20 +141,24 @@ end
     @desc
 ]]
 function CCDrop:sendContent()
-    local resolved = self.embeddedPlexus.resolvedSelections
-    local paths = {}
-
+    local resolved, paths = self.embeddedPlexus.resolvedSelections, {}
     for path, selectionState in pairs( resolved ) do
         if selectionState == 2 then
             if not fs.exists( path ) then
-                self:throw( "Failed to send", "Could not begin file transmission because selected files do not exist ("..path.."). Revise file selection and retry." )
+                self.trouble = "invalidFiles"
+                return
             elseif not fs.isDir( path ) then
                 paths[ #paths + 1 ] = path
             end
         end
     end
 
-    if self.connection then
+    if #paths == 0 then
+        self.trouble = "noFiles"
+        return
+    end
+
+    if self.activeConnection then
         local n = self:addNotification( Notification( "Failed to send", "File sending unavailable -- There is already an active connection.", { { "ok", "Okay" }, { "close", "Terminate Connection" } } ) )
         n:on("close", function()
             local diag = self:addDialog( DialogWindow( 1, 1, 37, 8, "Are you sure?", "Terminating the active connection will cause incomplete data transfer." ) )
@@ -115,22 +167,20 @@ function CCDrop:sendContent()
                 Y = "$parent.height / 2 - self.height / 2"
             }
 
-            diag:addNode( Button( "Cancel" ) ):on( "trigger", function()
-                self:removeDialog( diag )
-            end)
+            diag:addNode( Button( "Cancel" ) ):on( "trigger", function() self:removeDialog( diag ) end)
             diag:addNode( Button( "Terminate Anyway" ) ):on( "trigger", function( this )
-                -- self.connection:close( true )
+                -- self.activeConnection:close()
                 diag:set { title = "Terminating", closeable = false, body = "Attempting to negotiate connection termination with other client" }
 
                 diag:clearNodes()
                 diag:addNode( Button "Terminate Forcefully" ):on("trigger", function()
-                    -- self.connection:terminate()
+                    -- self.activeConnection:terminate()
                     self:removeDialog( diag )
                 end)
             end)
         end)
     else
-        -- Display computer picker
+        self.state = "discovering"
         self:discoverClients()
     end
 end
@@ -141,4 +191,16 @@ end
 ]]
 function CCDrop:receiveContent()
 
+end
+
+--[[
+    @instance
+    @desc
+]]
+function CCDrop:handleTimer( timer )
+    if self.state == "discovering" and timer.data[ 2 ] == self.discoveryTimeout then
+        self.discovering = false
+        self:query "Page#discovering Button#discoverRefresh":set( "enabled", true )
+        self:executeCallbacks "DISCOVERY_FINISH"
+    end
 end

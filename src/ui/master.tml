@@ -36,13 +36,13 @@
         <Button text="Settings" Y="${#initiate}.Y" X="$application.width - self.width - 4" backgroundColour="256" colour="1" id="settings"/>
     </Page>
     <Page id="picking">
-        <!-- File selector (Embedded installation of Plexus (installed via TPM)) -->
         <Terminal width="$parent.width" height="$parent.height"/>
     </Page>
     <Page id="discovering">
         <Label class="header centre" Y=3>Select a client</Label>
-
-
+        <Button Y="$parent.height - 1" X="$parent.width - self.width" id="discoverRefresh" backgroundColour="cyan" colour="1">Refresh Clients</Button>
+        <Container Y="5" width="$parent.width - 10" height="$parent.height - self.Y - 2" id="discoveryDisplay" enabled="$self.visible" fluidPositioning="true" positioning="fluid" class="centre"/>
+        <Label class="centre" id="discoveryState" enabled="$self.visible" Y="6">Searching for clients</Label>
         <Button text="Cancel" Y="$parent.height - 1" X="2" backgroundColour="256" colour="128" id="cancelDiscovery"/>
     </Page>
     <Page id="sending">
@@ -54,6 +54,6 @@
     <Page id="error">
         <Label class="header centre" id="title" Y=3>ERR</Label>
         <TextContainer id="body" Y=7 width="$application.width - 4" X="3" height="6" horizontalAlign="centre" text="ERROR"/>
-        <Button text="Return to home" Y="15" backgroundColour="cyan" colour="1" activeBackgroundColour="lightBlue" class="centre" id="return"/>
+        <Button text="Return" Y="15" backgroundColour="cyan" colour="1" activeBackgroundColour="lightBlue" class="centre" id="return" enabled="$self.visible"/>
     </Page>
 </PageContainer>
