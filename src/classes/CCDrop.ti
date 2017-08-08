@@ -28,7 +28,8 @@ function CCDrop:__init__( ... )
     end )
 
     self:on( "modem_message", self.handleMessage )
-    self:on( "peripheral", self.updatePeripherals )
+    self:on( "peripheral", self.checkForTrouble )
+    self:on( "peripheral_detach", self.checkForTrouble )
     self:on( "hiddenActive", function()
         self:schedule( function()
             self:updateDisplay()
@@ -73,8 +74,7 @@ end
 function CCDrop:checkForTrouble()
     self:updatePeripherals()
     if not self.modem then
-        -- self.trouble = "rednet"
-        if os.clock() < 20 then self.trouble = "unknown" else self.trouble = false end
+        self.trouble = "rednet"
     else
         self.trouble = false
     end
