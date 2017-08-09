@@ -3,6 +3,15 @@
 ]]
 
 abstract class MConnectionManager {
+    static = {
+        ERRORS = {
+            ALIVE_CHECK = {
+                timeout = "CCDrop could not establish a connection with the target client because the rednet request timed out.",
+                unknown = "An unknown error prevented CCDrop from establishing a connection with the target"
+            }
+        }
+    };
+
     connections = {};
     activeConnection = false;
 }
@@ -15,13 +24,35 @@ function MConnectionManager:connectToClient( clientID )
     if self.activeConnection then return end
 
     local connection = Connection( self, clientID, self.sending )
-    connection:confirmTransfer():success( function()
+    connection:connect():success( function()
         -- Connection handshake accepted; begin transfer
     end ):fail( function()
-        -- Connection failed; Abort
+        self:addNotification( Notification( "Failed to establish connection", "The target client failed to establish connection", { { "ok", "Okay" } } ) )
     end )
 
     self.state = "sending"
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function MConnectionManager:acceptClientConnection( clientID )
+    -- Check that the client is still alive
+    local connection = Connection( self, clientID )
+    connection:checkAlive():success( function()
+        -- The target client is commencing transfer.
+    end ):fail( function( _, reason )
+        self:addNotification( Notification( "Failed to establish connection", MConnectionManager.ERRORS.ALIVE_CHECK[ reason ] or MConnectionManager.ERRORS.ALIVE_CHECK.unknown, { { "ok", "Okay" } } ) )
+    end )
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function MConnectionManager:rejectClientConnection( clientID )
+
 end
 
 --[[

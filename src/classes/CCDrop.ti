@@ -202,5 +202,9 @@ function CCDrop:handleTimer( timer )
         self.discovering = false
         self:query "Page#discovering Button#discoverRefresh":set( "enabled", true )
         self:executeCallbacks "DISCOVERY_FINISH"
+    elseif self.activeConnection and timer.data[ 2 ] == self.activeConnection.timeout then
+        if self.activeConnection.def then
+            self.activeConnection.def:reject "timeout"
+        end
     end
 end

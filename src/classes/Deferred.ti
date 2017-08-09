@@ -11,7 +11,7 @@ class Deferred mixin MCallbackManager {
 function Deferred:__init__()
     local ms = Deferred.static.methods
     for i = 1, #ms do
-        self[ ms[ i ] ] = function( _, fn ) self:on( ms[ i ], fn ); return self end
+        self[ ms[ i ] ] = function( _, fn ) self:on( ms[ i ], function( ... ) fn( ... ); self:off( ms[ i ] ) end ); return self end
     end
 end
 

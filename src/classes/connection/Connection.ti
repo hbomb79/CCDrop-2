@@ -3,8 +3,19 @@
 ]]
 
 class Connection {
-	open = false;
-	owner = false;
+    static = {
+        states = {
+            IDLE = 0;
+            CHECKING = 1;
+        }
+    };
+
+    open = false;
+    mode = false;
+    sending = false;
+    state = false;
+
+    def = false;
 }
 
 --[[
@@ -12,28 +23,42 @@ class Connection {
 	@desc WIP
 ]]
 function Connection:__init__( ccdrop, id, paths )
+    self.owner, self.target, self.paths, self.state = ccdrop, id, paths, "idle"
+
     if ccdrop.activeConnection and ccdrop.activeConnection ~= self then
         if ccdrop.activeConnection.open then
-            error("Cannot spawn Connection instance targetting '"..tostring( id ).."'. An active connection is already open on the CCDrop instance.")
+            error( "Cannot spawn Connection instance targetting '"..tostring( id ).."'. An active connection is already open on the CCDrop instance." )
         else
             ccdrop.activeConnection:destroy( true )
         end
     else
         ccdrop.activeConnection = self
     end
+end
 
-    self.owner = ccdrop
-    self.target = id
-    self.paths = paths
+--[[
+    @instance
+    @desc WIP
+]]
+function Connection:checkAlive()
+    self.timeout, self.state = os.startTimer( 2 ), "checking"
+    self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "CHECK_ALIVE", { target = self.target } )
+
+    return self:setDef( Deferred() )
 end
 
 --[[
     @instance
     @desc Ensures the target is still active and is willing and able to accept the files proposed by the transfer
 ]]
-function Connection:confirmTransfer()
-    self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "FILE_PROMPT", { file_list = self.paths, target = self.target } )
-    return Deferred()
+function Connection:connect()
+    if self.paths then
+        self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "FILE_PROMPT", { file_list = self.paths, target = self.target } )
+    else
+
+    end
+
+    return self:setDef( Deferred() )
 end
 
 --[[
@@ -41,5 +66,34 @@ end
     @desc WIP
 ]]
 function Connection:handleMessage( message, content )
+    if self.state == Connection.states.IDLE or content.sender ~= self.target then return
+    elseif self.state == Connection.states.CHECKING then
+        -- This connection is checking that the client is still alive.
+        if content.content == "ALIVE" then
+            -- The target computer responded, and is able to continue
+            os.cancelTimer( self.timeout )
+            self.def:resolve()
+        end
+    end
+end
 
+--[[
+    @setter
+    @desc WIP
+]]
+function Connection:setState( name )
+    self.state = Connection.states[ name:upper() ] or error( "Unknown state '"..name.."'" )
+end
+
+--[[
+    @setter
+    @desc
+]]
+function Connection:setDef( def, fail )
+    if self.def then
+        self.def[ fail and "reject" or "resolve" ]( self.def )
+    end
+
+    self.def = def
+    return def
 end
