@@ -1,8 +1,7 @@
 centrePrint "Checking Plexus for updates"
--- if not shell.run( "tpm install Plexus --silent" ) then
-    -- TODO: Plexus installation media to TPM
-    -- error( "Failed to install Plexus (via TPM). Cannot continue with execution." )
--- end
+
+PLEXUS_VERSION = "v0.1.0-alpha.1"
+shell.run( ( "/.tpm/bin/tpm --disposable --depend %s install Plexus:%s --silent --fetch" ):format( shell.getRunningProgram(), PLEXUS_VERSION ) )
 
 centrePrint "Loading CCDrop"
 
