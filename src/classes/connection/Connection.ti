@@ -95,8 +95,6 @@ end
     @desc WIP
 ]]
 function Connection:handleMessage( message, content )
-    log("["..tostring( self.state ).."]")
-    log( textutils.serialise( content ) )
     if self.state == Connection.states.IDLE or content.sender ~= self.target then return
     elseif self.state == Connection.states.CHECKING then
         -- This connection is checking that the client is still alive
