@@ -19,7 +19,7 @@ end
     @instance
     @desc WIP
 ]]
-function Deferred:resolve( ... )
+function Deferred:accept( ... )
     self:executeCallbacks( "done", ... )
     self:executeCallbacks( "success", ... )
 end
