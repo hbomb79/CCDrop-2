@@ -59,7 +59,7 @@ function MConnectionManager:acceptClientConnection( clientID, paths )
     local connection = Connection( self, clientID )
     connection.filesToTransfer = #paths
     connection:connect():fail( function( _, reason )
-        self:addNotification( Notification( "Failed to establish connection", MConnectionManager.ERRORS.CONN_ACCEPT[ reason ] or MConnectionManager.ERRORS.CONN_ACCEPT.unknown, { { "ok", "Okay" } } ) )
+        if not reason or reason ~= "expired" then self:addNotification( Notification( "Failed to establish connection", MConnectionManager.ERRORS.CONN_ACCEPT[ reason ] or MConnectionManager.ERRORS.CONN_ACCEPT.unknown, { { "ok", "Okay" } } ) ) end
         connection:destroy()
     end )
 end

@@ -56,7 +56,8 @@ function Connection:connect()
         self.state = "prompting"
         self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "FILE_PROMPT", { file_list = self.paths, target = self.target } )
     else
-        self.timeout, self.state = os.startTimer( 2 ), "checking"
+        self:resetTimeout( 2 )
+        self.state = "checking"
         self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "ACCEPT", { target = self.target } )
     end
 
@@ -82,6 +83,7 @@ function Connection:pushFile()
         --h.close()
 
         self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "FILE", { target = self.target, file = "TEST", path = path })
+        self:resetTimeout( 5 )
         self.state = "confirmation"
     else
         -- Tell the target we are done
@@ -100,13 +102,16 @@ function Connection:handleMessage( message, content )
         -- This connection is checking that the client is still alive
         if content.content == "COMMENCING_TRANSFER" then
             -- The target computer responded, and is able to continue
-            os.cancelTimer( self.timeout )
             self.def:accept()
 
             self.state = "receiving"
+            self:resetTimeout()
 
             self.owner.state = "transferring"
             self.owner:updateStatus( "Waiting for files", "You have accepted a file transfer. It will begin shortly", true )
+        elseif content.content == "EXPIRED" then
+            self.def:reject "expired"
+            self.owner.trouble = "expired"
         end
     elseif self.state == Connection.states.PROMPTING then
         -- This connection is waiting for the target to accept transfer request
@@ -133,6 +138,8 @@ function Connection:handleMessage( message, content )
             -- Respond to sender
             self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "CONFIRMED", { target = self.target, path = content.path } )
             self.filesTransferred = self.filesTransferred + 1
+
+            self:resetTimeout()
         end
     elseif self.state == Connection.states.CONFIRMATION then
         -- Just sent a file. Waiting for confirmation that the file was received.
@@ -143,9 +150,32 @@ function Connection:handleMessage( message, content )
     end
 end
 
+function Connection:resetTimeout( time )
+    if self.timeout then os.cancelTimer( self.timeout ) end
+    self.timeout = os.startTimer( time or 3 )
+end
+
+function Connection:handleTimeout()
+    if self.state == Connection.states.CHECKING then
+        if self.def then self.def:reject "timeout" end
+    elseif self.state == Connection.states.RECEIVING or self.state == Connection.states.CONFIRMATION then
+        self:destroy()
+        self.owner.trouble = "connLost"
+    end
+end
+
 function Connection:destroy()
     if self.owner.activeConnection == self then
         self.owner.activeConnection = nil
+    end
+end
+
+function Connection:terminate()
+    if self.state == Connection.states.IDLE or self.state == Connection.states.PROMPTING then
+        self:destroy()
+        self.owner.state = "discovering"
+    else
+        --TODO: Negotiate termination
     end
 end
 

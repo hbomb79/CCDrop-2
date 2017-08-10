@@ -73,6 +73,8 @@ function MRednet:handleMessage( message )
     elseif self.activeConnection then
         -- Pass the message to the currently open connection for handling (file transfer)
         self.activeConnection:handleMessage( message, content )
+    elseif content.content == "ACCEPT" then
+        self:send( message.replyChannel, MRednet.channels.REPLY, "EXPIRED", { target = content.sender } )
     end
 end
 

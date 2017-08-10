@@ -4,7 +4,9 @@ class CCDrop extends Application mixin MRednet mixin MNotificationManager mixin 
             unknown = { "Unknown error occured", "CCDrop has encountered a problem, however it has not been caught correctly by the application.\n\nIf this issue persists, please report on the CC forums or via GitLab issues", true },
             rednet = { "Rednet modem not found", "CCDrop relies on rednet to transmit files between clients.\n\nNo modem can be found on your computer, please attach one in order to continue" },
             noFiles = { "No files were selected", "CCDrop cannot continue begin to transmit files because you selected no files. Select files before trying again.", true },
-            invalidFiles = { "Invalid Paths", "CCDrop cannot begin file transfer because some of the paths chosen do not exist.\n\nRevise paths and try again", true }
+            invalidFiles = { "Invalid Paths", "CCDrop cannot begin file transfer because some of the paths chosen do not exist.\n\nRevise paths and try again", true },
+            connLost = { "Connection Lost", "The connection to the target dropped. File transfer has been terminated -- Apologies for the inconvenience.", "root" },
+            expired = { "Cannot establish connection", "The request you are attempting to accept has been revoked by the sender.", true }
         }
     };
 
@@ -109,7 +111,7 @@ function CCDrop:setTrouble( code )
         local trouble = CCDrop.static.TROUBLE_CODES[ code ] or CCDrop.static.TROUBLE_CODES.unknown
         self:query "Page#error .header#title".result[ 1 ].text = trouble[ 1 ]
         self:query "Page#error TextContainer#body".result[ 1 ].text = trouble[ 2 ]
-        self:query "Page#error Button#return":set( "visible", trouble[ 3 ] )
+        self:query "Page#error Button#return":set( "visible", trouble[ 3 ] and true or false )
     end
 
     self:setState()
@@ -203,8 +205,6 @@ function CCDrop:handleTimer( timer )
         self:query "Page#discovering Button#discoverRefresh":set( "enabled", true )
         self:executeCallbacks "DISCOVERY_FINISH"
     elseif self.activeConnection and timer.data[ 2 ] == self.activeConnection.timeout then
-        if self.activeConnection.def then
-            self.activeConnection.def:reject "timeout"
-        end
+        self.activeConnection:handleTimeout()
     end
 end

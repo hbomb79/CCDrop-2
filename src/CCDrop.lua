@@ -57,6 +57,7 @@ end)
 
 client:query "Button#cancelDiscovery":on( "trigger", function() client.state = "picking"; client.sending = false end )
 client:query "Button#discoverRefresh":on( "trigger", function() if not client.discovering then client:discoverClients() end end )
+client:query "Button#connectionAbort":on( "trigger", function() if client.activeConnection then client.activeConnection:terminate() end end)
 
 -- Start the client
 client:embedPlexus()
