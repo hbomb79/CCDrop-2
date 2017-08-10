@@ -45,10 +45,12 @@
         <Label class="centre" id="discoveryState" enabled="$self.visible" Y="6">Searching for clients</Label>
         <Button text="Cancel" Y="$parent.height - 1" X="2" backgroundColour="256" colour="128" id="cancelDiscovery"/>
     </Page>
-    <Page id="sending">
+    <Page id="transferring">
         <Label class="header centre" Y=3>Waiting for Connection</Label>
         <TextContainer id="body" Y=7 width="$application.width - 4" X="3" height="6" horizontalAlign="centre" text="CCDrop is waiting for the other client to accept the file transfer request"/>
-        <Button id="connectionAbort" X="2" Y="$parent.height - 1" backgroundColour="256" colour="128">Abort</Button>
+        <Button id="connectionAbort" X="2" Y="$parent.height - 1" backgroundColour="256" colour="128" visible="$self.enabled">Abort</Button>
+
+        <ProgressBar Y="$parent.height - 4" X="$parent.width / 2 - self.width / 2 + .5" width="$parent.width - 8" visible="false"/>
     </Page>
     <Page id="receive">
 

@@ -1,0 +1,25 @@
+class ProgressBar extends Container {
+    percentage = 0;
+    backgroundColour = 256;
+}
+
+function ProgressBar:__init__( ... )
+    self:resolve( ... )
+    self:super()
+
+    self:register "percentage"
+
+    self:addNode( Pane() ):set { width = "$parent.percentage / 100 * parent.width", backgroundColour = colours.cyan }
+    self:addNode( Label( "" ) ):set {
+        X = "$parent.width / 2 - self.width / 2",
+        text = "$parent.percentage .. '%'",
+        colour = 1,
+        backgroundColour = 0
+    }
+end
+
+configureConstructor {
+    argumentTypes = {
+        percentage = "number"
+    }
+}

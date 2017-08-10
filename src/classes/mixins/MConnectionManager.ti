@@ -5,14 +5,18 @@
 abstract class MConnectionManager {
     static = {
         ERRORS = {
-            ALIVE_CHECK = {
-                timeout = "CCDrop could not establish a connection with the target client because the rednet request timed out.",
-                unknown = "An unknown error prevented CCDrop from establishing a connection with the target"
+            CONN_ACCEPT = {
+                timeout = "CCDrop accepted the request, but got no response from the target client",
+                unknown = "An unknown error prevented CCDrop from accepting the connection request from the target"
+            },
+            CONN_PROMPT = {
+                reject = "The target client denied the transfer request",
+                illegal = "This client has been blocked by the target client",
+                unknown = "An unknown error meant that the connection could not be established"
             }
         }
     };
 
-    connections = {};
     activeConnection = false;
 }
 
@@ -24,26 +28,39 @@ function MConnectionManager:connectToClient( clientID )
     if self.activeConnection then return end
 
     local connection = Connection( self, clientID, self.sending )
-    connection:connect():success( function()
-        -- Connection handshake accepted; begin transfer
-    end ):fail( function()
-        self:addNotification( Notification( "Failed to establish connection", "The target client failed to establish connection", { { "ok", "Okay" } } ) )
+    connection:connect():fail( function( _, reason )
+        self:addNotification( Notification( "Failed to establish connection", MConnectionManager.ERRORS.CONN_PROMPT[ reason ] or MConnectionManager.ERRORS.CONN_PROMPT.unknown, { { "ok", "Okay" } } ) )
+        connection:destroy()
+        self.state = "discovering"
     end )
 
-    self.state = "sending"
+    self.state = "transferring"
 end
 
 --[[
     @instance
     @desc WIP
 ]]
-function MConnectionManager:acceptClientConnection( clientID )
+function MConnectionManager:updateStatus( title, body, isTerm )
+    local pg = self:query "Page#transferring".result[ 1 ]
+    pg:query "Label.header":set( "text", title or "Waiting for Connection" )
+    pg:query "TextContainer#body":set( "text", body or "CCDrop is waiting for the other client to accept the file transfer request" )
+    pg:query "Button#connectionAbort":set { text = isTerm and "Terminate" or "Abort", backgroundColour = isTerm and colours.red or 256, colour = isTerm and 1 or 128 }
+
+    pg:query "ProgressBar":set( "visible", isTerm )
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function MConnectionManager:acceptClientConnection( clientID, paths )
     -- Check that the client is still alive
     local connection = Connection( self, clientID )
-    connection:checkAlive():success( function()
-        -- The target client is commencing transfer.
-    end ):fail( function( _, reason )
-        self:addNotification( Notification( "Failed to establish connection", MConnectionManager.ERRORS.ALIVE_CHECK[ reason ] or MConnectionManager.ERRORS.ALIVE_CHECK.unknown, { { "ok", "Okay" } } ) )
+    connection.filesToTransfer = #paths
+    connection:connect():fail( function( _, reason )
+        self:addNotification( Notification( "Failed to establish connection", MConnectionManager.ERRORS.CONN_ACCEPT[ reason ] or MConnectionManager.ERRORS.CONN_ACCEPT.unknown, { { "ok", "Okay" } } ) )
+        connection:destroy()
     end )
 end
 
@@ -52,29 +69,5 @@ end
     @desc WIP
 ]]
 function MConnectionManager:rejectClientConnection( clientID )
-
-end
-
---[[
-    @instance
-    @desc WIP
-]]
-function MConnectionManager:addConnection()
-
-end
-
---[[
-    @instance
-    @desc WIP
-]]
-function MConnectionManager:removeConnection()
-
-end
-
---[[
-    @instance
-    @desc WIP
-]]
-function MConnectionManager:terminateAll( forcefull )
-
+    self:send( MRednet.channels.REPLY, MRednet.channels.REPLY, "REJECT", { target = clientID } )
 end

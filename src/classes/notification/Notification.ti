@@ -33,7 +33,7 @@ function Notification:configure()
     self.width = "$parent.width - 6"
 
     if self.body then
-        self.bodyTextContainer = self:addNode( TextContainer( self.body ) ):set( "height", math.min( math.ceil( #self.body / TERM_X ), 4 ) )
+        self.bodyTextContainer = self:addNode( TextContainer( self.body ) ):set( "height", math.min( math.ceil( #self.body / TERM_X + .5 ), 4 ) )
     end
 
     local lines = client:generateButtons( self, 2, ( self.body and self.bodyTextContainer.height or 0 ) + 5, false, function( name )
@@ -47,7 +47,7 @@ function Notification:configure()
             self:removeNode( self.expandButton )
             self.collapsed = false
 
-            self:animate( "notificationExpand", "height", math.ceil( self.body and #self.body / TERM_X or 0 ) + 4 + ( lines * 2 ), 0.125, "inOutSine" )
+            self:animate( "notificationExpand", "height", math.ceil( self.body and ( #self.body / TERM_X +.5 ) or 0 ) + 4 + ( lines * 2 ), 0.125, "inOutSine" )
         end)
 
         self.expandButton:addClass "centre"
