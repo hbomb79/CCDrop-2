@@ -56,12 +56,19 @@ end
 ]]
 function MConnectionManager:acceptClientConnection( clientID, paths )
     -- Check that the client is still alive
-    local connection = Connection( self, clientID )
-    connection.filesToTransfer = #paths
-    connection:connect():fail( function( _, reason )
-        if not reason or reason ~= "expired" then self:addNotification( Notification( "Failed to establish connection", MConnectionManager.ERRORS.CONN_ACCEPT[ reason ] or MConnectionManager.ERRORS.CONN_ACCEPT.unknown, { { "ok", "Okay" } } ) ) end
-        connection:destroy()
-    end )
+    local function send()
+        local connection = Connection( self, clientID )
+        connection.filesToTransfer = #paths
+        connection:connect():fail( function( _, reason )
+            if not reason or reason ~= "expired" then self:addNotification( Notification( "Failed to establish connection", MConnectionManager.ERRORS.CONN_ACCEPT[ reason ] or MConnectionManager.ERRORS.CONN_ACCEPT.unknown, { { "ok", "Okay" } } ) ) end
+            connection:destroy()
+        end )
+    end
+
+    if self.activeConnection then
+        local n = self:addNotification( Notification( "Failed to send", "File sending unavailable -- There is already an active connection.", { { "ok", "Okay" }, { "close", "Terminate Connection" } } ) )
+        n:on("close", function() self.activeConnection:terminate(); send() end)
+    else send() end
 end
 
 --[[

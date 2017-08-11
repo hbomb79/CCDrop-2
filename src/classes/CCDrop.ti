@@ -161,15 +161,8 @@ function CCDrop:sendContent()
         return
     end
 
-    local function send()
-        self.sending, self.state = paths, "discovering"
-        self:discoverClients()
-    end
-
-    if self.activeConnection then
-        local n = self:addNotification( Notification( "Failed to send", "File sending unavailable -- There is already an active connection.", { { "ok", "Okay" }, { "close", "Terminate Connection" } } ) )
-        n:on("close", function() self.activeConnection:terminate(); send() end)
-    else send() end
+    self.sending, self.state = paths, "discovering"
+    self:discoverClients()
 end
 
 --[[
