@@ -60,6 +60,7 @@ function Connection:connect()
         self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "ACCEPT", { target = self.target } )
     end
 
+    self.owner:updateStatus()
     return self:setDef( Deferred() )
 end
 
@@ -170,6 +171,8 @@ function Connection:handleMessage( message, content )
             self.owner.state = "root"
             self.def:accept()
             self.state = "idle"
+
+            self:destroy()
         end
     end
 end
@@ -205,7 +208,7 @@ function Connection:terminate( force )
             return
         end
 
-        local def, owner = self:setDef( Deffered() ), self.owner
+        local def, owner = self:setDef( Deferred() ), self.owner
 
         local diag = owner:addDialog( DialogWindow( 1, 1, 37, 8, "Are you sure?", "Terminating the active connection will cause incomplete data transfer." ) )
         diag:set {
@@ -271,7 +274,7 @@ end
 ]]
 function Connection:setDef( def, fail )
     if self.def then
-        self.def[ fail and "reject" or "resolve" ]( self.def )
+        self.def[ fail and "reject" or "accept" ]( self.def )
     end
 
     self.def = def
