@@ -7,7 +7,8 @@ class CCDrop extends Application mixin MRednet mixin MNotificationManager mixin 
             invalidFiles = { "Invalid Paths", "CCDrop cannot begin file transfer because some of the paths chosen do not exist.\n\nRevise paths and try again", true },
             connLost = { "Connection Lost", "The connection to the target dropped. File transfer has been terminated -- Apologies for the inconvenience.", "root" },
             expired = { "Cannot establish connection", "The request you are attempting to accept has been revoked by the sender.", true },
-            terminated = { "Connection Terminated", "The other client has terminated the connection. The transfer has been discarded, and no files have been saved", "root" }
+            terminated = { "Connection Terminated", "The other client has terminated the connection. The transfer has been discarded, and no files have been saved", "root" },
+            failed = { "Transfer Failed", "The file transfer failed. Please try again later.\n\nIf you continue to experience the issue report it on the CC Forums, or GitLab.", "root" }
         }
     };
 

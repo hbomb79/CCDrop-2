@@ -24,6 +24,7 @@ class Connection {
 
     cachedPath = 1;
     filesTransferred = 0;
+    receivedFiles = {};
     filesToTransfer = 0;
 }
 
@@ -73,8 +74,9 @@ function Connection:pushFile()
     if path then
         -- Send the file
         if not fs.exists( path ) then
-            -- Path not found. Terminate the connection forcibly
-            self:terminate( true )
+            local reason = "Cannot send file '"..path.."', not found"
+            self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "FAILED", { target = self.target, reason = reason } )
+            self:failTransfer( reason )
             return
         end
 
@@ -89,7 +91,19 @@ function Connection:pushFile()
         -- Tell the target we are done
         self.state = "closing"
         self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "FINISHED", { target = self.target } )
+        self.owner:updateStatus( "Finishing Transfer", "CCDrop is waiting on the other client to finalize the transfer. This should only take a moment or two.", true )
+
+        self:resetTimeout( 5 )
     end
+end
+
+function Connection:failTransfer( reason, returnState )
+    self.owner.state = returnState or "root"
+    -- self.owner:addNotification( Notification( "File Transfer Failed", "The target client failed to send files for reason: " .. ( reason or "unknown reason" ) ))
+    self.owner.trouble = "failed"
+    self:destroy()
+
+    if self.timeout then os.cancelTimer( self.timeout ) end
 end
 
 --[[
@@ -127,7 +141,7 @@ function Connection:handleMessage( message, content )
             self:resetTimeout()
 
             self.owner.state = "transferring"
-            self.owner:updateStatus( "Waiting for files", "You have accepted a file transfer. It will begin shortly", true )
+            self.owner:updateStatus( "Transferring files", "CCDrop is transferring the target files to the target...", true )
         elseif content.content == "EXPIRED" then
             self.def:reject "expired"
             self.owner.trouble = "expired"
@@ -151,20 +165,56 @@ function Connection:handleMessage( message, content )
     elseif self.state == Connection.states.RECEIVING then
         -- Waiting to receive files
         if content.content == "FILE" then
-            -- Grab file contents (content.file)
-            --TODO
-
-            -- Respond to sender
-            self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "CONFIRMED", { target = self.target, path = content.path } )
-            self.filesTransferred = self.filesTransferred + 1
+            local path = content.path
+            if self.receivedFiles[ path ] then
+                self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "FAILED", { target = self.target, path = path, reason = "File already received" } )
+                self:failTransfer( "Duplicate files received from target, including '"..path.."'" )
+            else
+                self.receivedFiles[ path ], self.filesTransferred = content.file, self.filesTransferred + 1
+                self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "CONFIRMED", { target = self.target, path = path } )
+            end
 
             self:resetTimeout()
+        elseif content.content == "FAILED" then
+            -- The file transfer failed. The target client couldn't send the next file.
+            self:failTransfer( content.reason )
+        elseif content.content == "FINISHED" then
+            -- The file transfer is complete. Save the files and return to menu
+            self.owner:updateStatus( "Saving files", "The file transfer has completed, CCDrop is now saving the downloaded files", true )
+            local tFS = TI_VFS_RAW.fs
+            for path, content in pairs( self.receivedFiles ) do
+                if tFS.isReadOnly( path ) then
+                    self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "FAILED", { target = self.target, path = path, reason = "Path is read only (cannot be modified)" } )
+                    self:failTransfer()
+                    return
+                else
+                    local h = tFS.open( path, "w" )
+                    h.write( content )
+                    h.close()
+                end
+            end
+
+            self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "SUCCESS", { target = self.target } )
+            self.owner.state = "finished"
+            self:destroy()
         end
     elseif self.state == Connection.states.CONFIRMATION then
         -- Just sent a file. Waiting for confirmation that the file was received.
-        if content.content == "CONFIRMED" and content.path == self.paths[ self.cachedPath ] then
-            self.cachedPath, self.filesTransferred = self.cachedPath + 1, self.filesTransferred + 1
-            self:pushFile()
+        if content.path == self.paths[ self.cachedPath ] then
+            if content.content == "CONFIRMED" then
+                self.cachedPath, self.filesTransferred = self.cachedPath + 1, self.filesTransferred + 1
+                self:pushFile()
+            elseif content.content == "FAILED" then
+                -- Tell the user the transfer failed. The connection has already been terminated by the other target.
+                self:failTransfer( content.reason )
+            end
+        end
+    elseif self.state == Connection.states.CLOSING then
+        if content.content == "SUCCESS" then
+            self.owner.state = "finished"
+            self:destroy()
+        elseif content.content == "FAILED" then
+            self:failTransfer( content.reason )
         end
     elseif self.state == Connection.states.TERMINATING then
         if content.content == "TERMINATED" then
@@ -184,7 +234,7 @@ end
 function Connection:handleTimeout()
     if self.state == Connection.states.CHECKING or self.state == Connection.states.TERMINATING then
         if self.def then self.def:reject "timeout" end
-    elseif self.state == Connection.states.RECEIVING or self.state == Connection.states.CONFIRMATION then
+    elseif self.state == Connection.states.RECEIVING or self.state == Connection.states.CONFIRMATION or self.state == Connection.states.CLOSING then
         self:destroy()
         self.owner.trouble = "connLost"
     end
@@ -201,7 +251,6 @@ function Connection:terminate( force )
     else
         if force then
             -- Forcibly terminate the connection
-            self.state = "idle"
             self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "TERMINATE", { target = self.target } )
             self:destroy()
 
@@ -249,6 +298,8 @@ function Connection:destroy()
     if self.owner.activeConnection == self then
         self.owner.activeConnection = nil
     end
+
+    self.state = "idle"
 end
 
 --[[

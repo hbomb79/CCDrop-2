@@ -52,8 +52,12 @@
 
         <ProgressBar Y="$parent.height - 4" X="$parent.width / 2 - self.width / 2 + .5" width="$parent.width - 8" visible="false"/>
     </Page>
-    <Page id="receive">
+    <Page id="finished">
+        <Label class="header centre" Y=3>Transfer complete</Label>
+        <TextContainer id="body" Y=7 width="$application.width - 4" X="3" height="6" horizontalAlign="centre" text="CCDrop has successfully transferred all files to the target client.\n\nYou may now return to the main menu and initiate another request."/>
 
+        <Button text="Go Home" id="finishReturn" backgroundColour="cyan" Y="$parent.height - 1" X="$application.width - self.width - 1" colour="1"/>
+        <Button text="Exit" Y="$parent.height - 1" backgroundColour="red" colour="1" id="exit" X="3"/>
     </Page>
     <Page id="error">
         <Label class="header centre" id="title" Y=3>ERR</Label>

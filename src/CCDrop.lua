@@ -19,6 +19,7 @@ client:importFromTML "src/ui/master.tml"
 client:query "#exit":on( "trigger", function() client:stop() end )
 client:query "#initiate".result[ 1 ]:on( "trigger", function() client:pickContent() end ):set( "enabled", false )
 client:query "#settings":on( "trigger", function() client:revealSettings() end )
+client:query "#finishReturn":on( "trigger", function() client.state = "root" end )
 
 -- Cache important nodes
 notificationContent = client:query "#notifications".result[ 1 ]
