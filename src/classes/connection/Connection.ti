@@ -12,7 +12,6 @@ class Connection {
             RECEIVING = 4;
             CLOSING = 5;
             TERMINATING = 6;
-            TERMINATED = 7
         }
     };
 
@@ -73,16 +72,16 @@ function Connection:pushFile()
     if path then
         -- Send the file
         if not fs.exists( path ) then
-            -- Path not found. Terminate the connection
-            -- self:terminate()
-            error("Cannot send file. Path '"..path.."' doesn't exist")
+            -- Path not found. Terminate the connection forcibly
+            self:terminate( true )
+            return
         end
 
-        --local h = fs.open( path, "r" )
-        --local content = h.readAll()
-        --h.close()
+        local h = fs.open( path, "r" )
+        local content = h.readAll()
+        h.close()
 
-        self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "FILE", { target = self.target, file = "TEST", path = path })
+        self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "FILE", { target = self.target, file = content, path = path })
         self:resetTimeout( 5 )
         self.state = "confirmation"
     else
@@ -96,8 +95,27 @@ end
     @instance
     @desc WIP
 ]]
+function Connection:resetTimeout( time )
+    if self.timeout then os.cancelTimer( self.timeout ) end
+    self.timeout = os.startTimer( time or 3 )
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
 function Connection:handleMessage( message, content )
     if self.state == Connection.states.IDLE or content.sender ~= self.target then return
+    elseif content.content == "TERMINATE" then
+        -- The target has terminated our (not idle) connection. Let them know we saw this request
+        self.owner:send( message.replyChannel, MRednet.channels.REPLY, "TERMINATED", { target = self.target } )
+
+        -- Let this client know the connection was terminated
+        self.owner.trouble = "terminated"
+
+        -- Discard this connection
+        self.state = "idle"
+        self:destroy()
     elseif self.state == Connection.states.CHECKING then
         -- This connection is checking that the client is still alive
         if content.content == "COMMENCING_TRANSFER" then
@@ -147,16 +165,21 @@ function Connection:handleMessage( message, content )
             self.cachedPath, self.filesTransferred = self.cachedPath + 1, self.filesTransferred + 1
             self:pushFile()
         end
+    elseif self.state == Connection.states.TERMINATING then
+        if content.content == "TERMINATED" then
+            self.owner.state = "root"
+            self.def:accept()
+            self.state = "idle"
+        end
     end
 end
 
-function Connection:resetTimeout( time )
-    if self.timeout then os.cancelTimer( self.timeout ) end
-    self.timeout = os.startTimer( time or 3 )
-end
-
+--[[
+    @instance
+    @desc WIP
+]]
 function Connection:handleTimeout()
-    if self.state == Connection.states.CHECKING then
+    if self.state == Connection.states.CHECKING or self.state == Connection.states.TERMINATING then
         if self.def then self.def:reject "timeout" end
     elseif self.state == Connection.states.RECEIVING or self.state == Connection.states.CONFIRMATION then
         self:destroy()
@@ -164,18 +187,64 @@ function Connection:handleTimeout()
     end
 end
 
-function Connection:destroy()
-    if self.owner.activeConnection == self then
-        self.owner.activeConnection = nil
-    end
-end
-
-function Connection:terminate()
+--[[
+    @instance
+    @desc WIP
+]]
+function Connection:terminate( force )
     if self.state == Connection.states.IDLE or self.state == Connection.states.PROMPTING then
         self:destroy()
         self.owner.state = "discovering"
     else
-        --TODO: Negotiate termination
+        if force then
+            -- Forcibly terminate the connection
+            self.state = "idle"
+            self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "TERMINATE", { target = self.target } )
+            self:destroy()
+
+            return
+        end
+
+        local def, owner = self:setDef( Deffered() ), self.owner
+
+        local diag = owner:addDialog( DialogWindow( 1, 1, 37, 8, "Are you sure?", "Terminating the active connection will cause incomplete data transfer." ) )
+        diag:set {
+            X = "$parent.width / 2 - self.width / 2",
+            Y = "$parent.height / 2 - self.height / 2"
+        }
+
+        diag:addNode( Button( "Cancel" ) ):on( "trigger", function() owner:removeDialog( diag ) end)
+        diag:addNode( Button( "Terminate Anyway" ) ):on( "trigger", function( this )
+            -- The user has decided to terminate
+            self.state = "terminating"
+
+            -- Send the target a message letting us know we are forcefuly closing the connection.
+            self:resetTimeout( 2 )
+            self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "TERMINATE", { target = self.target } )
+
+            -- Change the dialog window to display information regarding the termination attempt
+            diag:set { title = "Terminating", closeable = false, body = "Attempting to negotiate connection termination with other client. Please wait" }
+            diag:clearNodes()
+
+            def:success( function() owner:removeDialog( diag ) end ):fail( function()
+                -- The deffered failed, which means the termination request timed out
+                diag:set { closeable = true, title = "No response", body = "We attempted to terminate the remote connection, but saw no response. The target client has likely gone offline so the connecion has been discarded." }
+                diag:addNode( Button( "Okay" ) ):on( "trigger", function() owner:removeDialog( diag ) end )
+
+                self:destroy()
+                owner.state = "root"
+            end )
+        end)
+    end
+end
+
+--[[
+    @instance
+    @desc WIP
+]]
+function Connection:destroy()
+    if self.owner.activeConnection == self then
+        self.owner.activeConnection = nil
     end
 end
 

@@ -6,7 +6,8 @@ class CCDrop extends Application mixin MRednet mixin MNotificationManager mixin 
             noFiles = { "No files were selected", "CCDrop cannot continue begin to transmit files because you selected no files. Select files before trying again.", true },
             invalidFiles = { "Invalid Paths", "CCDrop cannot begin file transfer because some of the paths chosen do not exist.\n\nRevise paths and try again", true },
             connLost = { "Connection Lost", "The connection to the target dropped. File transfer has been terminated -- Apologies for the inconvenience.", "root" },
-            expired = { "Cannot establish connection", "The request you are attempting to accept has been revoked by the sender.", true }
+            expired = { "Cannot establish connection", "The request you are attempting to accept has been revoked by the sender.", true },
+            terminated = { "Connection Terminated", "The other client has terminated the connection. The transfer has been discarded, and no files have been saved", "root" }
         }
     };
 
@@ -160,31 +161,15 @@ function CCDrop:sendContent()
         return
     end
 
-    if self.activeConnection then
-        local n = self:addNotification( Notification( "Failed to send", "File sending unavailable -- There is already an active connection.", { { "ok", "Okay" }, { "close", "Terminate Connection" } } ) )
-        n:on("close", function()
-            local diag = self:addDialog( DialogWindow( 1, 1, 37, 8, "Are you sure?", "Terminating the active connection will cause incomplete data transfer." ) )
-            diag:set {
-                X = "$parent.width / 2 - self.width / 2",
-                Y = "$parent.height / 2 - self.height / 2"
-            }
-
-            diag:addNode( Button( "Cancel" ) ):on( "trigger", function() self:removeDialog( diag ) end)
-            diag:addNode( Button( "Terminate Anyway" ) ):on( "trigger", function( this )
-                -- self.activeConnection:close()
-                diag:set { title = "Terminating", closeable = false, body = "Attempting to negotiate connection termination with other client" }
-
-                diag:clearNodes()
-                diag:addNode( Button "Terminate Forcefully" ):on("trigger", function()
-                    -- self.activeConnection:terminate()
-                    self:removeDialog( diag )
-                end)
-            end)
-        end)
-    else
+    local function send()
         self.sending, self.state = paths, "discovering"
         self:discoverClients()
     end
+
+    if self.activeConnection then
+        local n = self:addNotification( Notification( "Failed to send", "File sending unavailable -- There is already an active connection.", { { "ok", "Okay" }, { "close", "Terminate Connection" } } ) )
+        n:on("close", function() self.activeConnection:terminate(); send() end)
+    else send() end
 end
 
 --[[
