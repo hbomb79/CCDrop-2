@@ -26,7 +26,7 @@ build-release:
     - echo "Running release build. Building minified"
     - lua5.1 pkg.lua --titanium-minify --source="src" --class-source="src/classes" --vfs-allow-raw-fs-access --init="src/CCDrop.lua" --titanium-silent --pre-init="src/ui/splash.lua" --pickle-source="pickle.lua" --output="ccdrop.lua" --titanium --titanium-version="v0.1.0-beta.1"
     - curl https://gitlab.com/hbomb79/Titanium/raw/develop/bin/Minify.lua > minify.lua
-    - lua5.1 pkg.lua --titanium-minify --source="src" --class-source="src/classes" --vfs-allow-raw-fs-access --init="src/CCDrop.lua" --titanium-silent --pre-init="src/ui/splash.lua" --pickle-source="pickle.lua" --output="ccdrop.lua" --titanium --titanium-version="v0.1.0-beta.1" --minify-source="minify.lua" --minify
+    - lua5.1 pkg.lua --titanium-minify --source="src" --class-source="src/classes" --vfs-allow-raw-fs-access --init="src/CCDrop.lua" --titanium-silent --pre-init="src/ui/splash.lua" --pickle-source="pickle.lua" --output="ccdrop.min.lua" --titanium --titanium-version="v0.1.0-beta.1" --minify-source="minify.lua" --minify
   environment: release
   artifacts:
     name: "release_${CI_BUILD_REF_NAME}"
