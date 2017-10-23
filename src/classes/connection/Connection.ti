@@ -1,5 +1,26 @@
 --[[
-	WIP
+    @static states - table (def. { ... }) - A table that contains the enumeration values that can be used for the connections 'state'
+    @instance state - number (def. false) - The state of the connection. The number used is the representation of one (of seven) enumeration values in Connection.static.states. Should not be changed manually.
+    @instance def - Deferred Instance (def. false) - The current deferred object of the connection. If one is present when the connection experiences a timeout, the deferred will be used to inform processes running in parallel.
+    @instance cachedPath - number (def. 1) - A number presenting the nth path being sent (eg: when 1, the first path is being sent -- when 3, the third path is being sent). Used by a SENDING connection to keep track of the next path to send.
+    @instance filesTransferred - number (def. 0) - The amount of files transferred (successfully) to/from the sender (sending/receiving).
+    @instance receivedFiles - table (def. {}) - A table containing the files received (key-value pair: path = content).
+    @instance filesToTransfer - number (def. 0) - The amount of files to be transferred (sending/receiving)
+
+	The file transfer class of CCDrop. Once created and bound to a CCDrop client, this class
+    is able to initiate OR receive a file transfer to/from a client within rednet range.
+
+    The connection is able to hold one of 7 states (or 'false', meaning the connection has not started yet):
+        IDLE (0) - The connection is currently not active (ie: has just be instantiated, or has finished a transfer/been destroyed)
+        CHECKING (1) - The connection (a receiving connection) is checking that the client that proposed the connection is still alive. Once it confirms the client is alive, it will begin receiving files.
+        PROMPTING (2) - The connection (a sending connection) is waiting for an ACCEPT message from the target client (ie: waiting for the other client to enter 'CHECKING' state).
+        CONFIRMATION (3) - The connection (a sending connection) has just sent a file and is waiting for the target client to confirm that it received the payload.
+        RECEIVING (4) - The connection (a receiving connection) is waiting for files. When files are received from the target client, a confirmation will be sent back to confirm successful transfer.
+        CLOSING (5) - The connection (a sending connection) has finished sending all files and is closing the connection once confirmation of transfer success is received from the target client.
+        TERMINATING (6) - The connection is being forcibly closed by the user.
+
+    Once the connection is complete (ie: the connection: was terminated [either party], failed [eg: lost connection, no confirmation, failed to save files], successfully completed) it is
+    destroyed (the client no longer tracks the connection).
 ]]
 
 class Connection {
@@ -15,11 +36,7 @@ class Connection {
         }
     };
 
-    open = false;
-    mode = false;
-    sending = false;
     state = false;
-
     def = false;
 
     cachedPath = 1;
@@ -29,8 +46,13 @@ class Connection {
 }
 
 --[[
-	@instance
-	@desc WIP
+	@constructor
+	@desc Instantiates the connection by setting the owner, targetID, paths (if present -- only present when sending).
+
+          An already active connection on the client will be destroyed (or else, error). Otherwise, the active connection
+          will be set to this connection.
+
+          Until 'connect' is called, the connections state will remain 'IDLE'
 ]]
 function Connection:__init__( ccdrop, id, paths )
     self.owner, self.target, self.paths, self.state = ccdrop, id, paths, "idle"
@@ -67,7 +89,12 @@ end
 
 --[[
     @instance
-    @desc WIP
+    @desc Sends the next (or first) file (dictated by 'self.cachedPath').
+          If all files are sent, closes the connection with the other client.
+          If files are still needing to the sent:
+            - File is checked and loaded (if not found, connection fails)
+            - Sends the file
+            - Changes state to 'CONFIRMATION' and waits (max. 5 second wait, else failure) for confirmation from target client
 ]]
 function Connection:pushFile()
     local path = self.paths[ self.cachedPath ]
@@ -97,6 +124,14 @@ function Connection:pushFile()
     end
 end
 
+--[[
+    @instance
+    @desc Changes the state of the owner (CCDrop client) to match 'returnState' -- or 'root' if no returnState specified.
+          Sets the client's trouble code to 'failed' and destroys the active connection.
+
+          If no 'reason' provided, the client will display 'unkown reason'.
+    @param [string - reason], [string - returnState]
+]]
 function Connection:failTransfer( reason, returnState )
     self.owner.state = returnState or "root"
     -- self.owner:addNotification( Notification( "File Transfer Failed", "The target client failed to send files for reason: " .. ( reason or "unknown reason" ) ))
@@ -108,7 +143,11 @@ end
 
 --[[
     @instance
-    @desc WIP
+    @desc Resets the timer attached to this connection. Used to set timeouts for the connection.
+
+          If no 'time' is given, defaults to 3 (seconds). Once the timer fires (due to not being
+          cancelled, usually if the connection times out) the connection will likely close (see 'handleTimeout')
+    @param [number - time]
 ]]
 function Connection:resetTimeout( time )
     if self.timeout then os.cancelTimer( self.timeout ) end
@@ -117,7 +156,12 @@ end
 
 --[[
     @instance
-    @desc WIP
+    @desc Handles the message provided by using the current connections 'state' to
+          determine what the message means.
+
+          If the message is not recognised, the connection is idle, or the message is
+          from a foreign sender; it will be ignored.
+    @param <ModemEvent Instance - message>, <string - content>
 ]]
 function Connection:handleMessage( message, content )
     if self.state == Connection.states.IDLE or content.sender ~= self.target then return
@@ -229,7 +273,18 @@ end
 
 --[[
     @instance
-    @desc WIP
+    @desc If the connections timer fires, it usually indicates a failure to respond in a timely manner (aka: a timeout).
+          If the timer files while:
+            - The connection is trying to determine whether or not the client is alive (while accepting transfer)
+            - The connection is terminating
+          The attached deferred instance will be rejected with the argument 'timeout'.
+
+          If the timer fires while:
+            - The connection is waiting for files
+            - The connection is waiting for confirmation about a sent file
+            - The connection is closing
+          Then the connection has been lost and the connection instance will be destroyed (and the CCDrop client will
+          have it's trouble code set to 'connLost'.
 ]]
 function Connection:handleTimeout()
     if self.state == Connection.states.CHECKING or self.state == Connection.states.TERMINATING then
@@ -242,7 +297,22 @@ end
 
 --[[
     @instance
-    @desc WIP
+    @desc Terminates the connection (effectively aborting it causing data loss. The other party will not save the files sent).
+          If the termination request occurs while:
+            - The connection is IDLE
+            - The connection is waiting for the target client to accept transfer
+          The connection will be destroyed and the CCDrop client will return to the discovery page
+
+          If the termination request occurs at *any other time* AND 'force' is true, the target client will
+          be informed that the connection is CLOSED and this connection will be immediately destroyed.
+
+          IF the termination request occurs are *any other time* AND 'force' is NOT true, the user will be
+          shown a dialog box warning them about the consequences of terminating an in-progress connection. If
+          the user decides to terminate regardless, the state of the connection will be changed to 'TERMINATING'
+          and the target client will informed that the connection is closed.
+          If the target client does not respond within 2 seconds (to ackowledge closure) then it will be assumed
+          that the connection is already dead.
+    @param [boolean - force]
 ]]
 function Connection:terminate( force )
     if self.state == Connection.states.IDLE or self.state == Connection.states.PROMPTING then
@@ -292,7 +362,8 @@ end
 
 --[[
     @instance
-    @desc WIP
+    @desc Destroys the connection by ordering the CCDrop client to remove it from it's 'activeConnection'. The state of the connection
+          will be updated to 'IDLE'.
 ]]
 function Connection:destroy()
     if self.owner.activeConnection == self then
@@ -304,7 +375,9 @@ end
 
 --[[
     @setter
-    @desc WIP
+    @desc Sets the state of the connection to the value of the enum represented by the upper-case version of the name given. For
+          example, setting the state to 'idle' will use the value of the 'IDLE' enum (0).
+    @param <string - name>
 ]]
 function Connection:setState( name )
     self.state = Connection.states[ name:upper() ] or error( "Unknown state '"..name.."'" )
@@ -312,7 +385,8 @@ end
 
 --[[
     @setter
-    @desc WIP
+    @desc Sets the amount of filesTransferred, and updates the connection progress bar to reflect the transfer progress.
+    @param <number - filesTransferred>
 ]]
 function Connection:setFilesTransferred( filesTransferred )
     self.filesTransferred = filesTransferred
@@ -321,7 +395,12 @@ end
 
 --[[
     @setter
-    @desc
+    @desc Sets the deferred instance attached to the connection.
+          If a deferred is already attached, AND 'fail' is true: the def object will be rejected. If a def is already
+          attached, and not 'fail': the def instance will be accepted.
+
+    @param <Deferred Instance - def>, [boolean - fail]
+    @return <Deferred Instance - def>
 ]]
 function Connection:setDef( def, fail )
     if self.def then

@@ -1,3 +1,13 @@
+--[[
+    @instance side - string (def. false) - The side that the modem which received the message is on
+    @instance channel - number (def. false) - The channel that the message was received
+    @instance replyChannel - number (def. false) - The channel that the reply to this message should be sent on
+    @instance content - string (def. false) - The content of the message
+    @instance distance - number (def. false) - How far apart (in blocks) the sender and receiver are
+
+    A custom event that represents modem events
+]]
+
 class ModemEvent extends Event {
     side = false;
     channel = false;
@@ -6,6 +16,11 @@ class ModemEvent extends Event {
     distance = false;
 }
 
+--[[
+    @constructor
+    @desc Sets the side, channel, replyChannel, content and distance of the modem event (and stores all information in the 'data' table -- See 'Event' class)
+    @param <string - eventName>, <string - side>, <number - channel>, <number - replyChannel>, <string - content>, <number - distance>
+]]
 function ModemEvent:__init__( name, ... )
     self.side, self.channel, self.replyChannel, self.content, self.distance = ...
 

@@ -1,3 +1,23 @@
+--[[
+    @instance title - string (def. "Notification") - The title of the notification
+    @instance body - string (def. false) - The body of the notification (if any)
+    @instance options - table (def. false) - The options (responses) of the notification (format: { { name, displayText }, { ... }, ... }).
+    @instance collapsed - boolean (def. true) - If false, the notification is expanded (response buttons visible)
+    @instance height - number (def. 4) - The height (unless expanded) of the notification
+    @instance X - number (def. 4) - The X position of the notification
+    @instance backgroundColour - colour (def. 1) - The background colour of the notification (white)
+
+    A custom node that acts as a notification. Used to inform the user
+    of important information, OR to ask the user for input.
+
+    If 'options' is provided, it must be a list of tables -- the first index being the 'name' of the option, the second index being the 'displayText' of the option.
+    A button for each option will be set. The text of the button will be set to the 'displayText' of each option, when the button is triggered it will
+    execute a callback on this notification -- the name of the callback executed will be the 'name' of the option.
+
+    This options table is valid: { { "choice1", "First Choice" }, { "choice2", "Another choice" } }. Clicking on the second button will
+    call the 'choice2' callback on the notification (use notificationInstance:on( "choice2", fn ) to catch).
+]]
+
 class Notification extends Container {
     title = "Notification";
     body = false;
@@ -9,6 +29,10 @@ class Notification extends Container {
     backgroundColour = 1;
 }
 
+--[[
+    @constructor
+    @desc Starts the basic construction of the notification (creates the title label and hide button)
+]]
 function Notification:__init__( ... )
     self:resolve( ... )
     self:super( ... )
@@ -28,6 +52,10 @@ function Notification:__init__( ... )
     end)
 end
 
+--[[
+    @instance
+    @desc Completes node construction by adjusting Y, width and heignt to suite the notification (eg: the length of the body, amount of options).
+]]
 function Notification:configure()
     self.Y = -self.height
     self.width = "$parent.width - 6"

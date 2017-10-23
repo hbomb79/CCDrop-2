@@ -1,8 +1,19 @@
+--[[
+    @instance percentage - number (def. 0) - The current percentage of the node (0-100)
+    @instance backgroundColour - colour (def. 256) - The background colour of the progress bar (unfilled area)
+
+    A custom node that is used to display progress of the transfer
+]]
+
 class ProgressBar extends Container {
     percentage = 0;
     backgroundColour = 256;
 }
 
+--[[
+    @instance
+    @desc Creates the progress area (a pane that is dynamically linked to the 'percentage' property) which will increase as the percentage does
+]]
 function ProgressBar:__init__( ... )
     self:resolve( ... )
     self:super()

@@ -1,5 +1,15 @@
+--[[
+    An extended version of 'Notification' which generates a default title, body and set of responses using the first
+    three arguments of 'Notification:__init__'
+]]
+
 class FileNotification extends Notification
 
+--[[
+    @constructor
+    @desc Sets the title, body and set of responses. Creates 'accept' and 'deny' callbacks which will either accept or deny an incoming file transfer request
+    @param <ModemEvent Instance - message>
+]]
 function FileNotification:__init__( message )
     self:super( "File Transfer Request", "Client "..message.sender .. ( message.name and " (" .. message.name .. ")" or "" ) .. " is requesting a file transfer", { { "accept", "Accept Transfer" }, { "deny", "Deny Transfer" }, {"block", "Block Sender"}, {"view", "View Files"} } )
 

@@ -1,8 +1,19 @@
+--[[
+    @instance height - number (def. 3) - The height of the tile
+    @instance X - number (def. 2) - The X position of the tile
+
+    A TileNotification is the representation of a notification inside of the notification panel.
+]]
+
 class TileNotification extends Container mixin MActivatable {
     height = 3;
     X = 2;
 }
 
+--[[
+    @constructor
+    @desc Largely constructs the nodes layout (creates title label, sets ID, creates dismiss button, etc)
+]]
 function TileNotification:__init__( ... )
     self:resolve( ... )
     self:super( ... )
@@ -24,6 +35,10 @@ function TileNotification:__init__( ... )
     self.consumeAll = false
 end
 
+--[[
+    @instance
+    @desc Finishes construction by setting the width of the tile and updating the 'bodyLabel' text
+]]
 function TileNotification:configure()
     self.width = "$parent.width - 2"
     if self.notification.body and #self.notification.body > self.width - 1 then
@@ -31,6 +46,15 @@ function TileNotification:configure()
     end
 end
 
+--[[
+    @instance
+    @desc Handles incoming mouse events
+          If the event is a MOUSE event, the button clicked was the main button AND and mouse is either being clicked or released, ONE of the following will occur:
+            - If the event has already been handled, or is outside of the tile notification: set 'active' to false
+            - If the mouse is being clicked (must be within tile, else first condition would be true): set 'active' to true, and consume event
+            - If the mouse is being released, and the tile is 'active' (again, must be within tile): expand the notification, consume event and set active to 'false'
+    @param <MouseEvent Instance - eventObj>
+]]
 function TileNotification:handle( eventObj )
     if not self.super:handle( eventObj ) then return end
 

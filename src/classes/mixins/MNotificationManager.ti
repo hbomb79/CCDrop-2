@@ -14,6 +14,14 @@ local function incrementPosition( tiles, position, increment )
     end
 end
 
+--[[
+    @instance notifications - table (def. {}) - A table of the current notifications
+    @instance activeNotification - Notification Instance (def. false) - The notification currently displaying (peeking) at the top of the screen
+    @instance isPanelOpen - boolean (def. false) - When true, indicates that the notification panel is open
+
+    A mixin that allows the CCDrop client to create and display notifications that the user can respond to.
+]]
+
 abstract class MNotificationManager {
     notifications = {};
     activeNotification = false;
@@ -22,7 +30,7 @@ abstract class MNotificationManager {
 
 --[[
     @instance
-    @desc TODO
+    @desc Opens the notification panel (animates the Y of the panel to 1, and sets 'isPanelOpen' to true)
 ]]
 function MNotificationManager:openNotifications()
     notificationView:animate("notifPanel", "Y", 1, .25, "outSine")
@@ -32,7 +40,11 @@ end
 
 --[[
     @instance
-    @desc TODO
+    @desc Closes the notification panel (animates the Y of the panel to the negative height of the panel
+          and sets 'isPanelOpen' to false).
+
+          If the notification panel page is anything other than 'main' (eg: when viewing details about a
+          notification) the page will be changed back to 'main'.
 ]]
 function MNotificationManager:closeNotifications()
     notificationView:animate("notifPanel", "Y", -notificationView.height, .25, "inSine")
@@ -43,7 +55,12 @@ end
 
 --[[
     @instance
-    @desc TODO
+    @desc Adds the notification provided to the queue:
+            - Inserts the notification in to the queue
+            - Creates and inserts a tile notification
+            - Updates the notification display (peeks notification is none other is showing)
+    @param <Notification Instance - notification>
+    @return <Notification Instance - notification>
 ]]
 function MNotificationManager:addNotification( notification )
     table.insert( self.notifications, notification )
@@ -61,7 +78,11 @@ end
 
 --[[
     @instance
-    @desc TODO
+    @desc Removes the notification provided from the queue, and removes it's TileNotification.
+
+          If the notification is currently peeking it will be hidden first.
+    @param <Notification Instance - notification>
+    @return <Notification Instance - notification>
 ]]
 function MNotificationManager:removeNotification( notification )
     local function remove( notif )
@@ -87,7 +108,7 @@ end
 
 --[[
     @instance
-    @desc TODO
+    @desc Updates the display by peeking a new (unseen) notification if the notification panel is closed
 ]]
 function MNotificationManager:updateDisplay()
     if not self.isPanelOpen then
@@ -103,7 +124,11 @@ end
 
 --[[
     @instance
-    @desc TODO
+    @desc Generates rows of centered buttons using the 'options' provided.
+          Options table must be in form: { name, text }.
+          When any of the buttons are triggered, the name of the button will be passed to the 'cb' function.
+    @param <MNodeContainer Instance - target>, [number - X], [number  - Y], [table - options], [function - cb]
+    @return <number - countOfRows>
 ]]
 function MNotificationManager:generateButtons( target, X, Y, options, cb )
     X, Y = X or 2, Y or 9
@@ -147,7 +172,8 @@ end
 
 --[[
     @instance
-    @desc TODO
+    @desc Expands the provided notification to reveal the full description AND the
+          response controls
 ]]
 function MNotificationManager:expandNotification( notif )
     -- Replace notif title and body
@@ -170,7 +196,14 @@ end
 
 --[[
     @instance
-    @desc TODO
+    @desc Removes the currently peeking notification from the
+          screens. 'cb' will be called when the notification is
+          removed (animation completes).
+
+          'success' will be false when no 'notif' was provided, or when
+          the notification provided is not currently peeking.
+    @param <Notification Instance - notif>, [function - cb]
+    @return <boolean - success>
 ]]
 function MNotificationManager:hideActive( notif, cb )
     if ( not notif or self.activeNotification == notif ) and self.activeNotification then
@@ -192,7 +225,10 @@ end
 
 --[[
     @instance
-    @desc TODO
+    @desc Sets the active notification by sliding it into view from the
+          top of the screen (peeking). If 'activeNotification' is false,
+          the currently active notification will be hidden.
+    @param <Notification Instance - activeNotification>
 ]]
 function MNotificationManager:setActiveNotification( activeNotification )
     if activeNotification then
@@ -215,6 +251,11 @@ function MNotificationManager:setActiveNotification( activeNotification )
     self.activeNotification = activeNotification
 end
 
+--[[
+    @instance
+    @desc Inserts a tile notification into the notification panel, sliding down notifications under it if needed.
+    @param <number - position>, <TileNotification Instance - tile>
+]]
 function MNotificationManager:insertTileNotification( position, tile )
     tile:configure()
     tile.position = position
@@ -245,6 +286,11 @@ function MNotificationManager:insertTileNotification( position, tile )
     end
 end
 
+--[[
+    @instance
+    @desc Removes the tile notification by ID. Tiles under it will be moved up if needed.
+    @param <string - tileID>
+]]
 function MNotificationManager:removeTileNotification( tileID )
     -- Find tile position
     local tiles, pos, tile = notificationTiler.nodes

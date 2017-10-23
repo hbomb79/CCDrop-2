@@ -1,7 +1,18 @@
+--[[
+    @instance embeddedPlexus - Plexus Instance (def. false) - The Plexus instance that is embedded into CCDrop
+
+    A mixin that handles the embedded Plexus instance.
+]]
+
 abstract class MPlexusHandler {
     embeddedPlexus = false;
 }
 
+--[[
+    @instance
+    @desc Embeds Plexus by setting the '_PLEXUS_START' function (Plexus calls this function if it can find it when it starts up)
+          and setting the terminals chunk to the Plexus runtime (found at /.tpm/packages/Plexus).
+]]
 function MPlexusHandler:embedPlexus()
     local path = "/.tpm/packages/Plexus/" .. PLEXUS_VERSION
     if not fs.exists( path ) then
@@ -26,6 +37,11 @@ function MPlexusHandler:embedPlexus()
     terminal.thread.crashSilently = true
 end
 
+--[[
+    @instance
+    @desc Handles the newly started Plexus embed by attaching the 'cancel' and 'confirm'
+          callbacks to it (used for file selection).
+]]
 function MPlexusHandler:handlePlexus()
     local pl = self.embeddedPlexus
     pl:on( "cancel", function()

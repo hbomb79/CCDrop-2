@@ -1,5 +1,9 @@
 --[[
-    WIP
+    @static ERRORS - table (def. { ... }) - A table containing error descriptions for various error codes (eg: timeout, illegal)
+    @instance activeConnection - Connection Instance (def. false) - Represents the active connection (if any).
+
+    The manager of connections. Handles the connection to clients (file transfer), and the
+    reporting of current connection status.
 ]]
 
 abstract class MConnectionManager {
@@ -22,7 +26,9 @@ abstract class MConnectionManager {
 
 --[[
     @instance
-    @desc WIP
+    @desc Attempts to send files to the clientID provided. If connection fails, the user will
+          be returned to the client discovery page.
+    @param <number - clientID>
 ]]
 function MConnectionManager:connectToClient( clientID )
     if self.activeConnection then return end
@@ -39,7 +45,10 @@ end
 
 --[[
     @instance
-    @desc WIP
+    @desc Updates the information on the 'transferring' page to match the information given.
+
+          If 'isTerm', the ProgressBar on the transferring page will be visible.
+    @param <string - title>, <string - body>, [boolean - isTerm]
 ]]
 function MConnectionManager:updateStatus( title, body, isTerm )
     local pg = self:query "Page#transferring".result[ 1 ]
@@ -52,7 +61,14 @@ end
 
 --[[
     @instance
-    @desc WIP
+    @desc Accepts an incoming file transfer request from the client given.
+
+          If an active connection is already present, that connection must be terminated
+          before this new connection can be opened.
+
+          If the connection fails to establish the user will be notified and the connection
+          instance will be destroyed.
+    @param <number - clientID>, <table - paths>
 ]]
 function MConnectionManager:acceptClientConnection( clientID, paths )
     -- Check that the client is still alive
@@ -73,7 +89,8 @@ end
 
 --[[
     @instance
-    @desc WIP
+    @desc Replies to the clientID provided that this target does not want to accept this
+          request.
 ]]
 function MConnectionManager:rejectClientConnection( clientID )
     self:send( MRednet.channels.REPLY, MRednet.channels.REPLY, "REJECT", { target = clientID } )

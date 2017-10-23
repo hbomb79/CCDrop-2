@@ -1,4 +1,16 @@
-class CCDrop extends Application mixin MRednet mixin MNotificationManager mixin MFileManager mixin MPlexusHandler mixin MConnectionManager {
+--[[
+    @static TROUBLE_CODES - table (def. { ... }) - A table containing presentable information (title, description) on possible errors the client could encounter (eg: connection lost, termination, failures, etc).
+    @instance backgroundColour - colour (def. 128) - The background colour of the application. Manually changed to 128 (grey) for the client.
+    @instance colour - colour (def. 1) - The foreground colour of the application. Manually changed to 1 (white) for the client.
+    @instance allowRequests - boolean (def. true) - If false, incoming file transfer requests will be ignored
+    @instance state - string (def. false) - A string (or boolean false if no state) that represents the current state of the clients state machine. Should not be changed.
+
+    The core class for the CCDrop client. Provides the ability for the user to send
+    and receive files by utilising various mixins (and directly extended Titaniums built-in
+    Application class).
+]]
+
+class CCDrop extends Application mixin MRednet mixin MNotificationManager mixin MPlexusHandler mixin MConnectionManager {
     static = {
         TROUBLE_CODES = {
             unknown = { "Unknown error occured", "CCDrop has encountered a problem, however it has not been caught correctly by the application.\n\nIf this issue persists, please report on the CC forums or via GitLab issues", true },
@@ -22,7 +34,10 @@ class CCDrop extends Application mixin MRednet mixin MNotificationManager mixin 
 
 --[[
     @constructor
-    @desc
+    @desc Constructs the CCDrop instance by attaching event listeners to various events (for peripheral/message management).
+
+          Also binds the listeners for discovery events (DISCOVERED_CLIENT, DISCOVERY_FINISH) which are used when
+          pinging available clients for file transfer.
 ]]
 function CCDrop:__init__( ... )
     self:resolve( ... )
@@ -71,7 +86,11 @@ end
 
 --[[
     @instance
-    @desc
+    @desc Sets the state of the client to the state provided (or, if no state provided, refreshes the current state).
+
+          When the state is set (or current state is refreshed) the page of the application (main paginator) is set
+          to the state (OR, if the client is currently in trouble the 'error' page will be shown).
+    @param [string - state]
 ]]
 function CCDrop:setState( state )
     self.state = state or self.state
@@ -80,7 +99,7 @@ end
 
 --[[
     @instance
-    @desc
+    @desc WIP
 ]]
 function CCDrop:revealSettings()
     --TODO
@@ -88,7 +107,7 @@ end
 
 --[[
     @instance
-    @desc
+    @desc WIP
 ]]
 function CCDrop:concealSettings()
     --TODO
@@ -96,7 +115,8 @@ end
 
 --[[
     @instance
-    @desc
+    @desc Updates the clients information regarding available modems. Once updated, channels for
+          sending, replying and receiving are opened (See MRednet for information of modem channels)
 ]]
 function CCDrop:updatePeripherals()
     self:getModems()
@@ -105,7 +125,17 @@ end
 
 --[[
     @instance
-    @desc
+    @desc Sets the trouble code of the client. If a key matching the trouble code is found
+          in the CCDrop.static.TROUBLE_CODES table, the information from that key will
+          be used. If not, an unknown error message will be displayed.
+
+          When the trouble is set the client's state is refreshed (causing the 'error'
+          page to display).
+
+          If no 'troubleCode' is set, the trouble state of the client will be set to false
+          and the state will be refreshed (showing the page corresponding to the current
+          state of the client).
+    @param [string - troubleCode]
 ]]
 function CCDrop:setTrouble( code )
     self.trouble = code or false
@@ -121,7 +151,9 @@ end
 
 --[[
     @instance
-    @desc
+    @desc Checks common trouble scenarios and signals client trouble if one
+          is true (for instance, if no modems are found the 'rednet' trouble
+          code will be set).
 ]]
 function CCDrop:checkForTrouble()
     self:updatePeripherals()
@@ -134,7 +166,7 @@ end
 
 --[[
     @instance
-    @desc
+    @desc Sets the state of the client to 'picking', causing the embedded instance of Plexus to be revealed
 ]]
 function CCDrop:pickContent()
     self.state = "picking"
@@ -142,7 +174,14 @@ end
 
 --[[
     @instance
-    @desc
+    @desc Gathers the selected files from the embedded Plexus instance
+          and starts discovering clients (one of which can be selected
+          and file transfer can begin [once other party accepts file
+          transfer request]).
+
+          If one of the files selected no longer exists, or no
+          files are selected the client's trouble code will be set
+          to 'invalidFiles' or 'noFiles', respectively.
 ]]
 function CCDrop:sendContent()
     local resolved, paths = self.embeddedPlexus.resolvedSelections, {}
@@ -168,15 +207,15 @@ end
 
 --[[
     @instance
-    @desc
-]]
-function CCDrop:receiveContent()
+    @desc Handles a fired timer. If the timer is the discoveryTimeout, the client
+          will STOP discovering new clients and the 'DISCOVERY_FINISH' callback
+          will be executed.
 
-end
-
---[[
-    @instance
-    @desc
+          If the time is the timeout timer for the active connection, the
+          timer ID will be passed to the activeConnection for further
+          handling (usually results in somesort of 'timeout' action, such
+          as connection lost).
+    @param <Event Instance - timer>
 ]]
 function CCDrop:handleTimer( timer )
     if self.state == "discovering" and timer.data[ 2 ] == self.discoveryTimeout then

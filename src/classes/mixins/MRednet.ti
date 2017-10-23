@@ -1,3 +1,9 @@
+--[[
+    @static channels - table (def. { ... }) - A table that defines the DISCOVER channel (65535), the SEND channel (6018) and the REPLY channel (6019)
+
+    A mixin that handles basic rednet communication
+]]
+
 abstract class MRednet {
     static = {
         channels = {
@@ -11,12 +17,16 @@ abstract class MRednet {
 
 --[[
     @instance
-    @desc
+    @desc Stores the first modem the client finds in 'modem'.
 ]]
 function MRednet:getModems()
     self.modem = peripheral.find "modem"
 end
 
+--[[
+    @instance
+    @desc Opens the DISCOVER, SEND and REPLY channels on the cached modem
+]]
 function MRednet:openChannels()
     local modem = self.modem
     if not modem then return end
@@ -28,6 +38,15 @@ function MRednet:openChannels()
     end
 end
 
+--[[
+    @instance
+    @desc Creates a message that can be sent via rednet by serialising a table.
+
+          If 'extra' is provided, it must be a table. Otherwise, '{}' will be used. The 'content', senderID and senderName
+          will be set on 'extra' (or the blank table). The serialised result is the return value.
+    @param <string - content>, [table - extra]
+    @return <string - serialisedMessage>
+]]
 function MRednet:formatMessage( content, extra )
     extra = extra or {}
     extra.content = content
@@ -39,7 +58,8 @@ end
 
 --[[
     @instance
-    @desc
+    @desc Sends the message (content and extra passed to :formatMessage) on the channel provided.
+    @param <number - channel>, <number - replyChannel>, <string - content>, [table - extra]
 ]]
 function MRednet:send( channel, replyChannel, content, extra )
     local modem = self.modem
@@ -49,7 +69,12 @@ end
 
 --[[
     @instance
-    @desc
+    @desc Handles a new message by unserialising it's content. Depending on the content and the state of
+          the client, the message will be handled.
+
+          If an activeConnection is open, and the message is not handled already (eg: message is a 'PING', 'FILE_PROMPT' or 'PONG')
+          then the message will be handed to the connections :handleMessage method.
+    @param <ModemEvent Instance - message>
 ]]
 function MRednet:handleMessage( message )
     local content = textutils.unserialise( message.content )
@@ -80,7 +105,12 @@ end
 
 --[[
     @instance
-    @desc
+    @desc Begins client discovery by:
+            - Resetting dicovered clients
+            - Settings a 3 second timeout
+            - Settings the clients 'discovering' property to 'true'
+
+          A 'PING' message will be broadcast on the 'DISCOVER' channel.
 ]]
 function MRednet:discoverClients()
     self.discoveryTimeout, self.discovered, self.discovering = os.startTimer( 3 ), {}, true

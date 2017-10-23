@@ -1,5 +1,8 @@
 --[[
-    WIP
+    @static methods - table (def. { ... }) - The valid methods that can be called on this deferred to attach listeners (success, fail, done)
+
+    A helpful class that allows code to wait for failure/success. Mainly used by 'Connection' instances
+    to call code when timeouts are reached.
 ]]
 
 class Deferred mixin MCallbackManager {
@@ -8,6 +11,12 @@ class Deferred mixin MCallbackManager {
     }
 }
 
+--[[
+    @constructor
+    @desc Creates the methods set in Deferred.static.methods (success, fail, done). This allows the execution of the methods
+          which will create a callback listener for that type (ie: calling ':success' with a function will mean that function
+          will be called when the deferred instance is accepted).
+]]
 function Deferred:__init__()
     local ms = Deferred.static.methods
     for i = 1, #ms do
@@ -17,7 +26,8 @@ end
 
 --[[
     @instance
-    @desc WIP
+    @desc Marks that the deferred was accepted (a success condition). Calls 'done' and 'success' callbacks will all arguments
+          passed to this function
 ]]
 function Deferred:accept( ... )
     self:executeCallbacks( "done", ... )
@@ -26,7 +36,8 @@ end
 
 --[[
     @instance
-    @desc WIP
+    @desc Marks that the deferred was rejected (a failure condition). Calls 'done' and 'fail' callbacks with all arguments
+          passed to this function
 ]]
 function Deferred:reject( ... )
     self:executeCallbacks( "done", ... )
