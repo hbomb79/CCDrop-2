@@ -45,6 +45,13 @@
         <Label class="centre" id="discoveryState" enabled="$self.visible" Y="6">Searching for clients</Label>
         <Button text="Cancel" Y="$parent.height - 1" X="2" backgroundColour="256" colour="128" id="cancelDiscovery"/>
     </Page>
+    <Page id="review">
+        <Label class="header centre" Y=3>Review Transfer</Label>
+        <TextContainer class="centre" Y=5 height="2" width="$parent.width - 2" horizontalAlign="centre"></TextContainer>
+        <ReviewContainer id="body" Y=8 width="$application.width - 4" X="3" height=7/>
+        <Button id="reject" X="2" Y="$parent.height - 1" backgroundColour="red" colour="1">Reject</Button>
+        <Button id="accept" X="$application.width - self.width - 1" Y="$parent.height - 1">Accept</Button>
+    </Page>
     <Page id="transferring">
         <Label class="header centre" Y=3>Waiting for Connection</Label>
         <TextContainer id="body" Y=7 width="$application.width - 4" X="3" height="6" horizontalAlign="centre" text="CCDrop is waiting for the other client to accept the file transfer request"/>

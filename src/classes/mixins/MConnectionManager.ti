@@ -61,6 +61,36 @@ end
 
 --[[
     @instance
+    @desc Changes the state of the CCDrop client so that the user can view a list
+          of file paths that will be downloaded from the target client.
+
+          The user can either accept or reject the connection from this screen.
+    @param <number - clientID>, <table - paths>
+]]
+function MConnectionManager:reviewClientConnection( clientID, paths )
+    local pg = self:query "Page#review".result[ 1 ]
+
+    local cont = pg:query "ScrollContainer#body".result[ 1 ]
+    local path, overwriting = paths[ i ], false
+    for i = 1, #paths do
+        local l = Label( paths[ i ], 1, i )
+        if TI_VFS_RAW.fs.exists( paths[ i ] ) then
+            overwriting = true
+            l:set( "colour", colours.red )
+        end
+
+        cont:addNode( l )
+    end
+
+    pg:query "TextContainer":set( "text", "Review the paths below before accepting transfer" .. ( overwriting and ". Paths in red will be overwritten" or "" ) )
+    pg:query "Button#reject":on( "trigger", function() self:rejectClientConnection( clientID ) end, "reviewReject" )
+    pg:query "Button#accept":on( "trigger", function() self:acceptClientConnection( clientID, paths ) end, "reviewAccept" )
+
+    self.state = "review"
+end
+
+--[[
+    @instance
     @desc Accepts an incoming file transfer request from the client given.
 
           If an active connection is already present, that connection must be terminated

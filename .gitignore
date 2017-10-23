@@ -2,3 +2,4 @@ startup
 /.tpm
 build.lua
 titanium.lua
+*.swp

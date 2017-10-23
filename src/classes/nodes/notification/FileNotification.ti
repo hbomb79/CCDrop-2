@@ -11,9 +11,9 @@ class FileNotification extends Notification
     @param <ModemEvent Instance - message>
 ]]
 function FileNotification:__init__( message )
-    self:super( "File Transfer Request", "Client "..message.sender .. ( message.name and " (" .. message.name .. ")" or "" ) .. " is requesting a file transfer", { { "accept", "Accept Transfer" }, { "deny", "Deny Transfer" }, {"block", "Block Sender"}, {"view", "View Files"} } )
+    self:super( "File Transfer Request", "Client "..message.sender .. ( message.name and " (" .. message.name .. ")" or "" ) .. " is requesting a file transfer", { { "accept", "Accept Transfer" }, { "deny", "Deny Transfer" }, { "block", "Block Sender" } } )
 
-    self:on( "accept", function() self.application:acceptClientConnection( message.sender, message.file_list ) end )
+    self:on( "accept", function() self.application:reviewClientConnection( message.sender, message.file_list ) end )
     self:on( "deny", function() self.application:rejectClientConnection( message.sender ) end )
     -- self:on( "block", function() self.owner:blockClient( message.sender ) end )
     -- self:on( "view", function() self.owner:viewFileListings( message.sender, message.file_list ) end )
