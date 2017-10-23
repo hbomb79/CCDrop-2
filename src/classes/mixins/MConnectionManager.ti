@@ -70,7 +70,7 @@ end
 function MConnectionManager:reviewClientConnection( clientID, paths )
     local pg = self:query "Page#review".result[ 1 ]
 
-    local cont = pg:query "ScrollContainer#body".result[ 1 ]
+    local cont = pg:query "ReviewContainer".result[ 1 ]
     local path, overwriting = paths[ i ], false
     for i = 1, #paths do
         local l = Label( paths[ i ], 1, i )
