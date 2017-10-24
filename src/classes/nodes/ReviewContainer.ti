@@ -14,7 +14,10 @@ end
         - Provides callbacks for MOUSE clicks on the path names
 ]]
 
-class ReviewContainer extends ScrollContainer
+class ReviewContainer extends ScrollContainer {
+    conflictingPathBackgroundColour = colours.red,
+    conflictingPathColour = colours.white
+}
 
 --[[
     @instance
