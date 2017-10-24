@@ -113,7 +113,7 @@ function MConnectionManager:acceptClientConnection( clientID, paths )
 
     if self.activeConnection then
         local n = self:addNotification( Notification( "Failed to send", "File sending unavailable -- There is already an active connection.", { { "ok", "Okay" }, { "close", "Terminate Connection" } } ) )
-        n:on("close", function() self.activeConnection:terminate(); send() end)
+        n:on("close", function() self.activeConnection:terminate( true, send ); end)
     else send() end
 end
 
