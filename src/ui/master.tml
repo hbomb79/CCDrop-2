@@ -47,10 +47,10 @@
     </Page>
     <Page id="review">
         <Label class="header centre" Y=3>Review Transfer</Label>
-        <TextContainer class="centre" Y=5 height="2" width="$parent.width - 2" horizontalAlign="centre"></TextContainer>
-        <ReviewContainer id="body" Y=8 width="$application.width - 4" X="3" height=7/>
-        <Button id="reject" X="2" Y="$parent.height - 1" backgroundColour="red" colour="1">Reject</Button>
-        <Button id="accept" X="$application.width - self.width - 1" Y="$parent.height - 1">Accept</Button>
+        <TextContainer class="centre" Y=5 height="2" width="$parent.width - 3" horizontalAlign="centre"/>
+        <ReviewContainer id="body" Y="7" width="$application.width - 4" X="3" colour="lightGrey" height="8"/>
+        <Button id="reject" X="3" Y="$parent.height - 1" backgroundColour="red" colour="1">Reject</Button>
+        <Button id="accept" X="$application.width - self.width - 1" Y="$parent.height - 1" backgroundColour="cyan" colour="1">Accept</Button>
     </Page>
     <Page id="transferring">
         <Label class="header centre" Y=3>Waiting for Connection</Label>

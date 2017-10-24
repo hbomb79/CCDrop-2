@@ -1,5 +1,73 @@
+local function truncateString( s, l )
+    local over = #s - l
+    if over <= 0 then return s
+    elseif l <= 3 then return ("..."):sub( 1, l ) end
+
+    return s:sub( 1, math.max( math.floor( ( #s / 2 ) - 2 - ( over / 2 ) ), 0 ) ) .. "..." .. s:sub( math.ceil( ( #s / 2 ) + 2 + ( over / 2 ) ) )
+end
+
 --[[
-    WIP
+    An edited version of Titanium's ScrollContainer which:
+        - Replaces the sized canvas with a full-height canvas
+        - Replaces content caching methods
+        - Simply moves the canvas position (think of it as moving the 'viewport')
+        - Provides callbacks for MOUSE clicks on the path names
 ]]
 
-class ReviewContainer extends ScrollContainer {}
+class ReviewContainer extends ScrollContainer
+
+--[[
+    @instance
+    @desc Redraws the content of the ReviewContainer by drawing each
+          path to the canvas and redrawing the canvas
+
+          OVERRIDES ScrollContainer:draw
+    @param [boolean - force]
+]]
+function ReviewContainer:draw( force )
+    if not ( self.changed or force ) then return end
+
+    local paths = self.paths
+    if paths then
+        local isConflicting = false
+        for p = 1 + self.yScroll, math.min( self.canvas.height + self.yScroll, #paths ) do
+            isConflicting = TI_VFS_RAW.fs.exists( paths[ p ] )
+            self.canvas:drawTextLine( 1, p - self.yScroll, truncateString( paths[ p ], self.width - 2 ), isConflicting and self.conflictingPathColour, isConflicting and self.conflictingPathBackgroundColour )
+        end
+    else
+        self.canvas:drawTextLine( 1, 1, "No paths being reviewed", colours.red )
+    end
+
+    self:drawScrollbars()
+    self.changed = false
+end
+
+--[[
+    @instance
+    @desc Sets the content height to the amount of paths being displayed.
+
+          OVERRIDES ScrollContainer:cacheContentSize
+]]
+function ReviewContainer:cacheContentSize()
+    self.cache.contentWidth, self.cache.contentHeight = self.width - 1, self.paths and #self.paths or 0
+end
+
+--[[
+    @instance
+    @desc Adjusts the canvas dimensions to fit the amount of paths provided.
+
+          Each path will be drawn to the canvas (after clearing), the node will
+          be updated (next draw) and conflicting paths will be set to a different
+          colour (self.conflictingPathColour) than normal paths (self.colour).
+
+          Paths must be an index table (ie: not a 'dictionary'/hash based table)
+    @param <table - paths>
+]]
+function ReviewContainer:reviewPaths( paths )
+    if not( type( paths ) == "table" and #paths > 0 ) then
+        return error( "Unable to review paths for ReviewContainer. The 'paths' table (arg 1) is invalid. Must be an index based table (ie: not a hash table 'dictionary')" )
+    end
+
+    self.changed, self.paths = true, paths
+    self:cacheContent()
+end

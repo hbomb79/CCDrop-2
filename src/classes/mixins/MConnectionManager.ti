@@ -71,20 +71,11 @@ function MConnectionManager:reviewClientConnection( clientID, paths )
     local pg = self:query "Page#review".result[ 1 ]
 
     local cont = pg:query "ReviewContainer".result[ 1 ]
-    local path, overwriting = paths[ i ], false
-    for i = 1, #paths do
-        local l = Label( paths[ i ], 1, i )
-        if TI_VFS_RAW.fs.exists( paths[ i ] ) then
-            overwriting = true
-            l:set( "colour", colours.red )
-        end
+    cont:reviewPaths( paths )
 
-        cont:addNode( l )
-    end
-
-    pg:query "TextContainer":set( "text", "Review the paths below before accepting transfer" .. ( overwriting and ". Paths in red will be overwritten" or "" ) )
-    pg:query "Button#reject":on( "trigger", function() self:rejectClientConnection( clientID ) end, "reviewReject" )
-    pg:query "Button#accept":on( "trigger", function() self:acceptClientConnection( clientID, paths ) end, "reviewAccept" )
+    pg:query "TextContainer":set( "text", "Review the files below before accepting. Files in red are conflictions -- click to change path" )
+    pg:query "Button#reject".result[ 1 ]:off( "trigger", "reviewReject" ):on( "trigger", function() self:rejectClientConnection( clientID ); self.state = "root" end, "reviewReject" )
+    pg:query "Button#accept".result[ 1 ]:off( "trigger", "reviewAccept" ):on( "trigger", function() self:acceptClientConnection( clientID, paths ); self.state = "root" end, "reviewAccept" )
 
     self.state = "review"
 end
