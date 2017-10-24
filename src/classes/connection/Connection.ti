@@ -312,18 +312,21 @@ end
           and the target client will informed that the connection is closed.
           If the target client does not respond within 2 seconds (to ackowledge closure) then it will be assumed
           that the connection is already dead.
-    @param [boolean - force]
+    @param [boolean - force], [function - callback]
 ]]
-function Connection:terminate( force )
+function Connection:terminate( force, callback )
     if self.state == Connection.states.IDLE or self.state == Connection.states.PROMPTING then
         self:destroy()
         self.owner.state = "discovering"
+
+        if type( callback ) == "function" then callback( self, 1 ) end
     else
         if force then
             -- Forcibly terminate the connection
             self.owner:send( MRednet.channels.SEND, MRednet.channels.REPLY, "TERMINATE", { target = self.target } )
             self:destroy()
 
+            if type( callback ) == "function" then callback( self, 2 ) end
             return
         end
 
@@ -354,6 +357,7 @@ function Connection:terminate( force )
                 diag:addNode( Button( "Okay" ) ):on( "trigger", function() owner:removeDialog( diag ) end )
 
                 self:destroy()
+                if type( callback ) == "function" then callback( self, 3 ) end
                 owner.state = "root"
             end )
         end)
